@@ -63,25 +63,26 @@ These predictions are tested in the companion repository:
 
 **[Rosetta Manifold](https://github.com/jamesrahenry/Rosetta_Manifold)** — full empirical pipeline across 3 concepts, GPT-2 (124M) and GPT-2-XL (1.5B). See [RESULTS.md](https://github.com/jamesrahenry/Rosetta_Manifold/blob/main/RESULTS.md) for complete results and methodology notes.
 
-Results at GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
+Results at GPT-2-XL scale (48 layers, 100 contrastive pairs per concept, fp32 metric computation):
 
 | Concept | Type | Peak layer | Relative depth | Peak S |
 |---|---|---|---|---|
-| Negation | Syntactic | L30 / 48 | 63% | 0.257 |
-| Sentiment | Affective | L31 / 48 | 65% | 0.326 |
+| Negation | Syntactic | L39 / 48 | 81% | 0.314 |
+| Sentiment | Affective | L44 / 48 | 92% | 0.396 |
 | Credibility | Epistemic | L46 / 48 | 96% | 0.736 |
 
 **What is confirmed:**
-- The concept-type ordering (syntactic < affective < epistemic) emerges clearly at 48-layer scale
-- Credibility has dramatically stronger separation signal than negation or sentiment
-- The epistemic concept (credibility) has a distinct pre-CAZ region — assembly doesn't begin until layer 21
+- Concept-type ordering (syntactic < affective < epistemic) holds at 48-layer scale
+- Credibility has substantially stronger separation signal (S=0.736 vs 0.314–0.396)
+- Negation and credibility relative depths are stable across GPT-2 (~83%) and GPT-2-XL (~81%, ~96%) — consistent with Prediction 2 for those concepts
+- Prediction 1 (Mid-Stream Ablation) confirmed at GPT-2 scale
 
 **What is not yet confirmed:**
-- **Prediction 2 (Architecture-Stable Positioning):** Relative depths differ substantially between GPT-2 (all concepts peak at 83%) and GPT-2-XL (63–96%). The 12-layer GPT-2 is too shallow to differentiate concepts. Testing Prediction 2 properly requires multiple architectures at the *same* parameter scale — the frontier-scale work.
-- **Prediction 1 (Mid-Stream Ablation):** Confirmed at GPT-2 (100% separation reduction). Not confirmed at GPT-2-XL — the concept direction at 1.5B parameters is too distributed for single-layer projection ablation.
-- **Predictions 3 and 4** require frontier-scale models (70B+) for meaningful test.
+- **Prediction 2 (Architecture-Stable Positioning):** Ordering holds and negation/credibility depths are stable, but sentiment shifts from 83% (GPT-2) to 92% (GPT-2-XL). Proper confirmation requires same-scale cross-architecture comparison.
+- **Prediction 1 at GPT-2-XL:** Not confirmed — single-layer projection ablation insufficient at 1.5B scale.
+- **Predictions 3 and 4** require frontier-scale models (70B+).
 
-The concept-ordering finding is the most robust result. The architecture-stability claim requires more work.
+The concept-ordering and partial architecture-stability findings are the most robust results.
 
 ---
 
