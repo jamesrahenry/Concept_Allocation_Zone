@@ -61,17 +61,27 @@ Late-layer re-entanglement of concept directions correlates with structure in th
 
 These predictions are tested in the companion repository:
 
-**[Rosetta Manifold](https://github.com/jamesrahenry/Rosetta_Manifold)** — full empirical pipeline across 3 concepts × 10 proxy-scale models (GPT-2, GPT-Neo, OPT families).
+**[Rosetta Manifold](https://github.com/jamesrahenry/Rosetta_Manifold)** — full empirical pipeline across 3 concepts, GPT-2 (124M) and GPT-2-XL (1.5B). See [RESULTS.md](https://github.com/jamesrahenry/Rosetta_Manifold/blob/main/RESULTS.md) for complete results and methodology notes.
 
-Selected results:
+Results at GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
 
-| Concept | Type | Relative CAZ peak | Ablation (separation reduction) |
-|---|---|---|---|
-| Credibility | Epistemic | ~92% depth | 100% at proxy scale |
-| Negation | Syntactic | ~81% depth | 100% at proxy scale |
-| Sentiment | Affective | ~88–92% depth | 100% at proxy scale |
+| Concept | Type | Peak layer | Relative depth | Peak S |
+|---|---|---|---|---|
+| Negation | Syntactic | L30 / 48 | 63% | 0.257 |
+| Sentiment | Affective | L31 / 48 | 65% | 0.326 |
+| Credibility | Epistemic | L46 / 48 | 96% | 0.736 |
 
-Predictions 1 and 2 are confirmed at proxy scale. Predictions 3 and 4 require frontier-scale models (70B+) for definitive test.
+**What is confirmed:**
+- The concept-type ordering (syntactic < affective < epistemic) emerges clearly at 48-layer scale
+- Credibility has dramatically stronger separation signal than negation or sentiment
+- The epistemic concept (credibility) has a distinct pre-CAZ region — assembly doesn't begin until layer 21
+
+**What is not yet confirmed:**
+- **Prediction 2 (Architecture-Stable Positioning):** Relative depths differ substantially between GPT-2 (all concepts peak at 83%) and GPT-2-XL (63–96%). The 12-layer GPT-2 is too shallow to differentiate concepts. Testing Prediction 2 properly requires multiple architectures at the *same* parameter scale — the frontier-scale work.
+- **Prediction 1 (Mid-Stream Ablation):** Confirmed at GPT-2 (100% separation reduction). Not confirmed at GPT-2-XL — the concept direction at 1.5B parameters is too distributed for single-layer projection ablation.
+- **Predictions 3 and 4** require frontier-scale models (70B+) for meaningful test.
+
+The concept-ordering finding is the most robust result. The architecture-stability claim requires more work.
 
 ---
 
@@ -100,9 +110,9 @@ The core contribution is framing concept representation not as a static property
 
 ## Status
 
-This is a theoretical framework paper with partial empirical validation. The proxy-scale results (10 models, 3 concepts) are complete. Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access.
+This is a theoretical framework paper with partial empirical validation. Proxy-scale results for 3 concepts on GPT-2 and GPT-2-XL are complete. The concept-type ordering prediction is confirmed; the architecture-stability prediction (Prediction 2) and ablation hypothesis at larger scale (Prediction 1) require same-scale cross-architecture experiments at frontier scale.
 
-The paper is a preliminary draft. It has not been submitted for peer review.
+Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The paper is a preliminary draft and has not been submitted for peer review.
 
 ---
 
