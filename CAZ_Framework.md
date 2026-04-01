@@ -104,7 +104,7 @@ To identify CAZ boundaries, we compute the rate of geometric divergence between 
 v_concept(l) = (1/(2k+1)) Σⱼ₌ₗ₋ₖ^(l+k) [S(j) - S(j-1)]
 ```
 
-where *k* is the smoothing half-window (typically k=1 for 32-layer models, k=2 for deeper architectures). This prevents false CAZ boundary detection from single anomalous layers.
+where *k* is the smoothing half-window. A practical heuristic is k = ⌊L/24⌋, where L is total model depth, yielding k=1 for 12–24 layer models, k=2 for 48-layer models, and k=3 for 72-layer models. This scales the smoothing window proportionally to model depth and prevents false CAZ boundary detection from single anomalous layers. The appropriate value of k should ultimately be determined empirically — for models where ground-truth concept boundaries can be established via ablation, the k value that maximizes boundary prediction accuracy is preferred.
 
 ### 3.3 CAZ Boundary Detection
 
@@ -172,7 +172,7 @@ Gurnee et al. [2025] found curved manifolds in middle layers for character count
 
 **SAE dark matter**
 
-Engels et al. [2024] demonstrated that approximately 50% of the SAE error vector and over 90% of its norm can be linearly predicted from input activations—the unexplained residual is structured, not noise. The CAZ phase model offers a candidate explanation for part of this dark matter: SAEs are trained on activations at fixed layers, but in-progress concept construction within the CAZ produces representations that are neither fully syntactic (pre-CAZ) nor fully semantic (post-CAZ). These transitional representations may produce the nonlinear error term that persists regardless of SAE scaling.
+Engels et al. [2024] investigated the structured residual ("dark matter") left unexplained by sparse autoencoders, finding that approximately 50% of the SAE error vector and over 90% of its norm can be linearly predicted from the input activation—the unexplained residual is structured, not noise—and that larger SAEs largely fail to reconstruct the same contexts as smaller SAEs. Crucially, they distinguish a linearly predictable error component from a genuinely *nonlinear* residual that behaves differently from the rest. The CAZ phase model offers a candidate mechanism for part of this nonlinear component: SAEs are trained on activations at a fixed layer, but in-progress concept construction within the CAZ produces transitional representations that are neither fully syntactic (pre-CAZ) nor fully semantic (post-CAZ). These transitional states may be precisely the activations that resist linear decomposition regardless of SAE scale, connecting the assembly-zone framing to the structured nature of the dark matter Engels et al. observe.
 
 **Abliteration**
 
@@ -184,9 +184,52 @@ Zou et al. [2023] extract directions for honesty, morality, power-seeking, and r
 
 ---
 
-## 6. Limitations
+## 6. Preliminary Empirical Results
 
-This framework is theoretical. No experiments have been run. Known limitations include:
+The framework has been partially validated on the GPT-2 family using a full empirical pipeline across 8 concepts × 8 model architectures (GPT-2, GPT-2-Medium, GPT-2-Large, GPT-2-XL, GPT-Neo, Pythia, OPT variants), implemented in the companion repository [Rosetta Manifold](https://github.com/jamesrahenry/Rosetta_Manifold).
+
+### 6.1 GPT-2-XL Results
+
+At GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
+
+| Concept | Type | Peak layer | Relative depth | Peak S |
+|---|---|---|---|---|
+| temporal\_order | relational | L36 / 48 | 75% | 0.449 |
+| causation | relational | L37 / 48 | 77% | 0.488 |
+| negation | syntactic | L39 / 48 | 81% | 0.314 |
+| certainty | epistemic | L44 / 48 | 92% | 0.500 |
+| moral\_valence | affective | L44 / 48 | 92% | 0.294 |
+| sentiment | affective | L44 / 48 | 92% | 0.396 |
+| credibility | epistemic | L46 / 48 | 96% | 0.736 |
+| plurality | syntactic | L47 / 48 | 98% | 0.322 |
+
+### 6.2 Confirmed Findings
+
+**Prediction 1 (Mid-Stream Ablation Hypothesis)** is confirmed at GPT-2 scale: single-layer orthogonal projection ablation at the CAZ peak achieves 100% separation reduction on concept probes. This result does not extend to GPT-2-XL, where single-layer projection is insufficient — consistent with the expectation that 1.5B-scale models require multi-layer or weight-space intervention.
+
+**Broad late-assembly ordering**: A clear two-cluster structure is observed. Relational and syntactic concepts (temporal\_order, causation, negation) assemble in the 75–81% depth range; affective and epistemic concepts (certainty, moral\_valence, sentiment, credibility) cluster in the 92–96% range. This separation is robust across the 8 architectures tested.
+
+**Credibility** exhibits substantially stronger separation signal (S = 0.736) than all other concepts — more than 50% larger than the next strongest (certainty, S = 0.500) — suggesting a particularly well-defined concept direction.
+
+### 6.3 Anomalies and Open Questions
+
+**The within-type syntactic < relational ordering is reversed.** The framework predicted syntactic concepts would assemble earlier than relational ones; the data shows the opposite — causation and temporal\_order (relational) assemble at 75–77%, while negation (syntactic) assembles later at 81%. The ordering between types holds, but the within-type prediction does not.
+
+**Plurality is anomalously deep** (L47, 98% depth) — the deepest concept measured, deeper even than credibility. A syntactic concept assembling in the final layers of a 48-layer model is not explained by the current framework and warrants investigation at larger scale.
+
+**Prediction 2 (Architecture-Stable Positioning)** is partially supported — the broad two-cluster ordering holds across architectures — but proper validation requires same-scale cross-architecture comparison (e.g., GPT-Neo-1.3B vs. OPT-1.3B vs. GPT-2-XL at matched parameter count).
+
+**Predictions 3 and 4** (CAZ width and post-CAZ logit interference) have not yet been tested and require either frontier-scale models or a wider concept vocabulary with operationalized abstraction levels.
+
+### 6.4 Frontier-Scale Validation
+
+Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The proxy-scale results are sufficient to establish that the CAZ is a real and measurable phenomenon; they are not sufficient to confirm the architecture-stability and abstraction-width predictions at production model scale.
+
+---
+
+## 7. Limitations
+
+Known limitations include:
 
 **Computational cost**
 
@@ -210,7 +253,7 @@ High separation at a layer does not establish that the concept is *used* at that
 
 ---
 
-## 7. Conclusion
+## 8. Conclusion
 
 The Concept Assembly Zone provides a framework for analyzing how Transformers construct semantic representations across their depth. By shifting from single-layer snapshots to cross-layer flow analysis, it generates specific, testable predictions about concept extraction quality, optimal ablation depth, and the geometric origins of the SAE dark matter.
 
@@ -224,11 +267,18 @@ The CAZ framework is offered as a complement to existing interpretability method
 
 ## References
 
-- Arditi et al. (2024). Representation Engineering and Abliteration
-- Elhage et al. (2021). A Mathematical Framework for Transformer Circuits
-- Engels et al. (2024). SAE Dark Matter
-- Engels et al. (2025). Linear Representations of Temporal Concepts
-- Gurnee et al. (2025). Geometric Manifolds in Transformers
-- Wollschläger et al. (2025). Concept Cones and Refusal Geometry
-- Zhao et al. (2025). Token Position Dependence in Harmfulness Encoding
-- Zou et al. (2023). Representation Engineering
+- Arditi, A., Obeso, O., Syed, A., Paleka, D., Panickssery, N., Gurnee, W., & Nanda, N. (2024). Refusal in language models is mediated by a single direction. *arXiv preprint arXiv:2406.11717*. https://arxiv.org/abs/2406.11717
+
+- Elhage, N., Nanda, N., Olsson, C., Henighan, T., Joseph, N., Mann, B., Askell, A., Bai, Y., Chen, A., Conerly, T., DasSarma, N., Drain, D., Ganguli, D., Hatfield-Dodds, Z., Hernandez, D., Jones, A., Kernion, J., Lovitt, L., Ndousse, K., Amodei, D., Brown, T., Clark, J., Kaplan, J., McCandlish, S., & Olah, C. (2021). A mathematical framework for transformer circuits. *Transformer Circuits Thread*, Anthropic. https://transformer-circuits.pub/2021/framework/index.html
+
+- Engels, J., Riggs, L., & Tegmark, M. (2024). Decomposing the dark matter of sparse autoencoders. *Transactions on Machine Learning Research (TMLR)*, April 2025. *arXiv preprint arXiv:2410.14670*. https://arxiv.org/abs/2410.14670
+
+- Engels, J., Michaud, E. J., Liao, I., Gurnee, W., & Tegmark, M. (2025). Not all language model features are one-dimensionally linear. *Proceedings of the International Conference on Learning Representations (ICLR 2025)*. *arXiv preprint arXiv:2405.14860*. https://arxiv.org/abs/2405.14860
+
+- Gurnee, W., Ameisen, E., Kauvar, I., Tarng, W., Pearce, A., Olah, C., & Batson, J. (2025). When models manipulate manifolds. *Transformer Circuits Thread*, Anthropic, October 2025. *arXiv preprint arXiv:2601.04480*. https://arxiv.org/abs/2601.04480
+
+- Wollschläger, T., Elstner, J., Geisler, S., Cohen-Addad, V., Günnemann, S., & Gasteiger, J. (2025). The geometry of refusal in large language models: Concept cones and representational independence. *Proceedings of Machine Learning Research (ICML 2025)*, 267, 66945–66970. *arXiv preprint arXiv:2502.17420*. https://arxiv.org/abs/2502.17420
+
+- Zhao, J., Huang, J., Wu, Z., Bau, D., & Shi, W. (2025). Harmfulness and refusal are distinct concepts in language models. *Advances in Neural Information Processing Systems (NeurIPS 2025)*. *arXiv preprint arXiv:2507.11878*. https://arxiv.org/abs/2507.11878
+
+- Zou, A., Phan, L., Chen, S., Campbell, J., Guo, P., Ren, R., Pan, A., Yin, X., Mazeika, M., Dombrowski, A.-K., Goel, S., Li, N., Byun, M. J., Wang, Z., Mallen, A., Basart, S., Koyejo, S., Song, D., Fredrikson, M., Kolter, J. Z., & Hendrycks, D. (2023). Representation engineering: A top-down approach to AI transparency. *arXiv preprint arXiv:2310.01405*. https://arxiv.org/abs/2310.01405

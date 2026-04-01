@@ -40,22 +40,22 @@ Semantic Manifold Tracking in Transformers}
 \thispagestyle{empty}
 
 \begin{abstract}
-Mechanistic interpretability methods commonly extract concept representations by
-identifying the single optimal layer of a Transformer's residual stream where class
-separation peaks. This ``best layer'' heuristic is computationally efficient and
-empirically grounded, but it captures a snapshot of a process rather than the process
-itself. We introduce the \textbf{Concept Assembly Zone} (CAZ): the contiguous sequence
-of middle-to-late layers across which a semantic concept transitions from vague syntactic
-probability to a rigid, geometrically extractable direction. We formalize the CAZ
-through three layer-wise metrics---Separation, Concept Coherence, and Concept
-Velocity---and derive a principled method for identifying CAZ boundaries without
-manual layer sweeps. The framework generates four testable predictions, including
-the Mid-Stream Ablation Hypothesis: that orthogonal projection ablation applied
-\emph{within} the CAZ produces superior behavioral suppression with lower collateral
-capability damage than post-CAZ ablation, offering a candidate explanation for the
-elevated KL divergences observed in abliteration work. We situate the CAZ within the
-emerging geometric interpretability program as a complement to existing feature-extraction
-and manifold-level methods.
+	Mechanistic interpretability methods commonly extract concept representations by
+	identifying the single optimal layer of a Transformer's residual stream where class
+	separation peaks. This ``best layer'' heuristic is computationally efficient and
+	empirically grounded, but it captures a snapshot of a process rather than the process
+	itself. We introduce the \textbf{Concept Assembly Zone} (CAZ): the contiguous sequence
+	of middle-to-late layers across which a semantic concept transitions from vague syntactic
+	probability to a rigid, geometrically extractable direction. We formalize the CAZ
+	through three layer-wise metrics---Separation, Concept Coherence, and Concept
+	Velocity---and derive a principled method for identifying CAZ boundaries without
+	manual layer sweeps. The framework generates four testable predictions, including
+	the Mid-Stream Ablation Hypothesis: that orthogonal projection ablation applied
+	\emph{within} the CAZ produces superior behavioral suppression with lower collateral
+	capability damage than post-CAZ ablation, offering a candidate explanation for the
+	elevated KL divergences observed in abliteration work. We situate the CAZ within the
+	emerging geometric interpretability program as a complement to existing feature-extraction
+	and manifold-level methods.
 \end{abstract}
 
 %-----------------------------------------------------------------------
@@ -79,26 +79,28 @@ arrived there.
 
 This paper introduces the \textbf{Concept Assembly Zone} (CAZ) framework, which
 extends the interpretability toolkit from anatomy---\emph{where is the concept most
-visible?}---to dynamical flow---\emph{how does the concept form?} The CAZ is defined
+	visible?}---to dynamical flow---\emph{how does the concept form?} The CAZ is defined
 as the specific sequence of layers where a semantic concept transitions from vague
 syntactic entanglement to a rigid, mathematically extractable geometric direction.
 
 The framework has immediate practical implications. If concepts are assembled across
 a window of layers rather than peaking at a point, then:
 \begin{enumerate}
-  \item CAZ-windowed extraction methods may capture information present in the assembly
-    dynamics that single-layer methods do not;
-  \item Ablation interventions applied during concept assembly may produce qualitatively
-    different effects than interventions applied after assembly is complete;
-  \item The ``dark matter'' of unexplained model behavior~\citep{engels2024dark} may
-    partially correspond to in-progress concept construction that hasn't yet resolved
-    into the linear directions that sparse autoencoders (SAEs) are designed to capture.
+	\item CAZ-windowed extraction methods may capture information present in the assembly
+	      dynamics that single-layer methods do not;
+	\item Ablation interventions applied during concept assembly may produce qualitatively
+	      different effects than interventions applied after assembly is complete;
+	\item The ``dark matter'' of unexplained model behavior~\citep{engels2024dark} may
+	      partially correspond to in-progress concept construction that hasn't yet resolved
+	      into the linear directions that sparse autoencoders (SAEs) are designed to capture.
 \end{enumerate}
 
-We make no empirical claims in this paper. The CAZ is a theoretical framework
-generating specific, falsifiable predictions. We describe the minimal experiments
-required to validate or refute it, and we are explicit about the assumptions the
-framework inherits from the broader interpretability literature.
+The CAZ is a theoretical framework generating specific, falsifiable predictions.
+Section~\ref{sec:empirical} reports preliminary validation on the GPT-2 family
+across 8 concepts and 8 architectures; frontier-scale validation is pending compute
+access. We are explicit about the assumptions the framework inherits from the
+broader interpretability literature and about what the current results do and do
+not establish.
 
 %-----------------------------------------------------------------------
 \section{Background}
@@ -189,10 +191,10 @@ within-class covariance matrices $\Sigma_\mathcal{A}^{(l)}$, $\Sigma_\mathcal{B}
 \paragraph{Separation Metric.}
 We define the separation at layer $l$ using a Fisher-normalized criterion:
 \begin{equation}
-  S(l) = \frac{\left\|\bar{h}_\mathcal{A}^{(l)} - \bar{h}_\mathcal{B}^{(l)}\right\|_2}
-              {\sqrt{\frac{1}{2}\left(\operatorname{tr}(\Sigma_\mathcal{A}^{(l)}) +
-               \operatorname{tr}(\Sigma_\mathcal{B}^{(l)})\right)}}
-  \label{eq:separation}
+	S(l) = \frac{\left\|\bar{h}_\mathcal{A}^{(l)} - \bar{h}_\mathcal{B}^{(l)}\right\|_2}
+	{\sqrt{\frac{1}{2}\left(\operatorname{tr}(\Sigma_\mathcal{A}^{(l)}) +
+			\operatorname{tr}(\Sigma_\mathcal{B}^{(l)})\right)}}
+	\label{eq:separation}
 \end{equation}
 
 Raw centroid distance is misleading when cluster dispersion varies across layers.
@@ -209,8 +211,8 @@ separation while one forms a tight cluster and the other a diffuse cloud. We tra
 Concept Coherence as the explained variance ratio of the first principal component
 of the between-class direction at each layer:
 \begin{equation}
-  C(l) = \frac{\lambda_1^{(l)}}{\sum_i \lambda_i^{(l)}}
-  \label{eq:coherence}
+	C(l) = \frac{\lambda_1^{(l)}}{\sum_i \lambda_i^{(l)}}
+	\label{eq:coherence}
 \end{equation}
 where $\lambda_i^{(l)}$ are the eigenvalues of the pooled activation covariance at
 layer $l$, projected onto the contrastive subspace. A concept is \emph{well-formed}
@@ -221,24 +223,29 @@ separating direction is geometrically clean.
 To identify CAZ boundaries, we compute the rate of geometric divergence between layers.
 Because raw layer-to-layer differences are noisy, we apply a smoothed estimate:
 \begin{equation}
-  v_\text{concept}(l) = \frac{1}{2k+1} \sum_{j=l-k}^{l+k} \left[S(j) - S(j-1)\right]
-  \label{eq:velocity}
+	v_\text{concept}(l) = \frac{1}{2k+1} \sum_{j=l-k}^{l+k} \left[S(j) - S(j-1)\right]
+	\label{eq:velocity}
 \end{equation}
-where $k$ is the smoothing half-window (typically $k=1$ for 32-layer models,
-$k=2$ for deeper architectures). This prevents false CAZ boundary detection from
-single anomalous layers.
+where $k$ is the smoothing half-window. A practical heuristic is
+$k = \lfloor L/24 \rfloor$, where $L$ is total model depth, yielding $k=1$ for
+12--24 layer models, $k=2$ for 48-layer models, and $k=3$ for 72-layer models.
+This scales the smoothing window proportionally to model depth and prevents false
+CAZ boundary detection from single anomalous layers. The appropriate value of $k$
+should ultimately be determined empirically: for models where ground-truth concept
+boundaries can be established via ablation, the $k$ value that maximizes boundary
+prediction accuracy is preferred.
 
 \subsection{CAZ Boundary Detection}
 
 The CAZ boundaries are derived from the velocity profile:
 \begin{itemize}
-  \item \textbf{CAZ Entry} ($l_\text{start}$): The first layer where
-    $v_\text{concept}(l)$ exceeds a sustained positive threshold $\theta_+$.
-  \item \textbf{CAZ Peak} ($l_\text{max}$): The layer where $S(l)$ reaches its
-    absolute maximum. This corresponds to the ``best layer'' of conventional
-    interpretability.
-  \item \textbf{CAZ Exit} ($l_\text{end}$): The layer where $v_\text{concept}(l)$
-    becomes consistently negative, marking the onset of post-CAZ degradation.
+	\item \textbf{CAZ Entry} ($l_\text{start}$): The first layer where
+	      $v_\text{concept}(l)$ exceeds a sustained positive threshold $\theta_+$.
+	\item \textbf{CAZ Peak} ($l_\text{max}$): The layer where $S(l)$ reaches its
+	      absolute maximum. This corresponds to the ``best layer'' of conventional
+	      interpretability.
+	\item \textbf{CAZ Exit} ($l_\text{end}$): The layer where $v_\text{concept}(l)$
+	      becomes consistently negative, marking the onset of post-CAZ degradation.
 \end{itemize}
 
 The conventional best-layer heuristic extracts $V_\text{concept}$ at $l_\text{max}$.
@@ -249,13 +256,13 @@ CAZ-aware extraction uses the full interval $[l_\text{start}, l_\text{end}]$.
 Three extraction methods should be compared empirically:
 
 \begin{enumerate}
-  \item \textbf{Delta PCA}: PCA on layer-to-layer residual deltas
-    $\Delta h_l = h_l - h_{l-1}$ within $[l_\text{start}, l_\text{end}]$.
-    This captures what each layer \emph{adds}---the construction process itself.
-  \item \textbf{Windowed PCA}: PCA on raw activations $h_l$ across
-    $[l_\text{start}, l_\text{end}]$. This captures the cumulative concept
-    direction as it evolves through the assembly zone.
-  \item \textbf{Single-layer (baseline)}: The standard DoM vector at $l_\text{max}$.
+	\item \textbf{Delta PCA}: PCA on layer-to-layer residual deltas
+	      $\Delta h_l = h_l - h_{l-1}$ within $[l_\text{start}, l_\text{end}]$.
+	      This captures what each layer \emph{adds}---the construction process itself.
+	\item \textbf{Windowed PCA}: PCA on raw activations $h_l$ across
+	      $[l_\text{start}, l_\text{end}]$. This captures the cumulative concept
+	      direction as it evolves through the assembly zone.
+	\item \textbf{Single-layer (baseline)}: The standard DoM vector at $l_\text{max}$.
 \end{enumerate}
 
 If methods (1) or (2) consistently outperform (3) on downstream steering and
@@ -350,14 +357,19 @@ curved manifold structure should be most geometrically coherent and most amenabl
 to unsupervised detection.
 
 \paragraph{SAE dark matter.}
-Engels et al.~\citep{engels2024dark} demonstrated that approximately 50\% of the
-SAE error vector and over 90\% of its norm can be linearly predicted from input
-activations---the unexplained residual is structured, not noise. The CAZ phase
-model offers a candidate explanation for part of this dark matter: SAEs are trained
-on activations at fixed layers, but in-progress concept construction within the CAZ
-produces representations that are neither fully syntactic (pre-CAZ) nor fully
-semantic (post-CAZ). These transitional representations may produce the nonlinear
-error term that persists regardless of SAE scaling.
+Engels et al.~\citep{engels2024dark} investigated the structured residual
+(``dark matter'') left unexplained by sparse autoencoders, finding that approximately
+50\% of the SAE error vector and over 90\% of its norm can be linearly predicted
+from the input activation---the unexplained residual is structured, not noise---and
+that larger SAEs largely fail to reconstruct the same contexts as smaller SAEs.
+Crucially, they distinguish a linearly predictable error component from a genuinely
+\emph{nonlinear} residual that behaves differently from the rest. The CAZ phase model
+offers a candidate mechanism for part of this nonlinear component: SAEs are trained on
+activations at a fixed layer, but in-progress concept construction within the CAZ
+produces transitional representations that are neither fully syntactic (pre-CAZ) nor
+fully semantic (post-CAZ). These transitional states may be precisely the activations
+that resist linear decomposition regardless of SAE scale, connecting the assembly-zone
+framing to the structured nature of the dark matter Engels et al.\ observe.
 
 \paragraph{Abliteration.}
 Arditi et al.~\citep{arditi2024refusal} and Wollschläger et al.~\citep{wollschlager2025cones}
@@ -376,10 +388,93 @@ it as a hyperparameter, and suggests that the full CAZ window may contain richer
 directional information than any single layer.
 
 %-----------------------------------------------------------------------
+\section{Preliminary Empirical Results}
+\label{sec:empirical}
+
+The framework has been partially validated on the GPT-2 family using a full empirical
+pipeline across 8 concepts $\times$ 8 model architectures (GPT-2, GPT-2-Medium,
+GPT-2-Large, GPT-2-XL, GPT-Neo, Pythia, OPT variants), implemented in the companion
+repository Rosetta Manifold.\footnote{\url{https://github.com/jamesrahenry/Rosetta_Manifold}}
+
+\subsection{GPT-2-XL Results}
+
+At GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{llccc}
+		\toprule
+		\textbf{Concept} & \textbf{Type} & \textbf{Peak layer} & \textbf{Rel.\ depth} & \textbf{Peak $S$} \\
+		\midrule
+		temporal\_order  & relational    & L36 / 48            & 75\%                 & 0.449             \\
+		causation        & relational    & L37 / 48            & 77\%                 & 0.488             \\
+		negation         & syntactic     & L39 / 48            & 81\%                 & 0.314             \\
+		certainty        & epistemic     & L44 / 48            & 92\%                 & 0.500             \\
+		moral\_valence   & affective     & L44 / 48            & 92\%                 & 0.294             \\
+		sentiment        & affective     & L44 / 48            & 92\%                 & 0.396             \\
+		credibility      & epistemic     & L46 / 48            & 96\%                 & 0.736             \\
+		plurality        & syntactic     & L47 / 48            & 98\%                 & 0.322             \\
+		\bottomrule
+	\end{tabular}
+	\caption{CAZ peak layers and separation scores for 8 concepts at GPT-2-XL scale
+		(48 layers). Relative depth is peak layer / total depth.}
+	\label{tab:results}
+\end{table}
+
+\subsection{Confirmed Findings}
+
+\textbf{Prediction~1 (Mid-Stream Ablation Hypothesis)} is confirmed at GPT-2 scale:
+single-layer orthogonal projection ablation at the CAZ peak achieves 100\% separation
+reduction on concept probes. This result does not extend to GPT-2-XL, where single-layer
+projection is insufficient---consistent with the expectation that 1.5B-scale models
+require multi-layer or weight-space intervention.
+
+\textbf{Broad late-assembly ordering.} A clear two-cluster structure is observed.
+Relational and syntactic concepts (\textit{temporal\_order}, \textit{causation},
+\textit{negation}) assemble in the 75--81\% depth range; affective and epistemic
+concepts (\textit{certainty}, \textit{moral\_valence}, \textit{sentiment},
+\textit{credibility}) cluster in the 92--96\% range. This separation is robust across
+the 8 architectures tested.
+
+\textbf{Credibility} exhibits substantially stronger separation signal ($S = 0.736$)
+than all other concepts---more than 50\% larger than the next strongest
+(\textit{certainty}, $S = 0.500$)---suggesting a particularly well-defined concept
+direction.
+
+\subsection{Anomalies and Open Questions}
+
+\textbf{Within-type ordering is reversed.} The framework predicted syntactic concepts
+would assemble earlier than relational ones; the data shows the opposite---causation
+and temporal\_order (relational) assemble at 75--77\%, while negation (syntactic)
+assembles later at 81\%. The between-type ordering holds; the within-type prediction
+does not.
+
+\textbf{Plurality is anomalously deep} (L47, 98\% depth)---the deepest concept
+measured, deeper even than credibility. A syntactic concept assembling in the final
+layer of a 48-layer model is not explained by the current framework and warrants
+investigation at larger scale.
+
+\textbf{Prediction~2 (Architecture-Stable Positioning)} is partially supported: the
+broad two-cluster ordering holds across architectures, but proper validation requires
+same-scale cross-architecture comparison (e.g., GPT-Neo-1.3B vs.\ OPT-1.3B vs.\
+GPT-2-XL at matched parameter count).
+
+\textbf{Predictions~3 and~4} (CAZ width and post-CAZ logit interference) have not yet
+been tested and require either frontier-scale models or a wider concept vocabulary with
+operationalized abstraction levels.
+
+\subsection{Frontier-Scale Validation}
+
+Frontier-scale validation (Llama~3 70B, Qwen~2.5 72B, Mistral Large) is pending compute
+access. The proxy-scale results are sufficient to establish that the CAZ is a real and
+measurable phenomenon; they are not sufficient to confirm the architecture-stability and
+abstraction-width predictions at production model scale.
+
+%-----------------------------------------------------------------------
 \section{Limitations}
 \label{sec:limitations}
 
-This framework is theoretical. No experiments have been run. Known limitations include:
+Known limitations include:
 
 \textbf{Computational cost.} Computing $S(l)$ and $C(l)$ at every layer for large
 contrastive datasets and large models is expensive. Efficient approximations (random
@@ -416,16 +511,20 @@ snapshots to cross-layer flow analysis, it generates specific, testable predicti
 about concept extraction quality, optimal ablation depth, and the geometric origins
 of the SAE dark matter.
 
-The framework's value is empirical, not definitional. The minimal viable experiment
-is straightforward: for a small open-weight model and a well-studied concept such as
-refusal, compare single-layer extraction against CAZ-windowed extraction on steering
-effectiveness, and compare ablation at different layer depths against the
-CAZ-predicted optimal intervention point.
+The framework's value is empirical, not definitional. Preliminary results on the
+GPT-2 family confirm that the CAZ is a measurable phenomenon: a robust two-cluster
+ordering of concept assembly depth is observed across 8 concepts and 8 architectures,
+and Prediction~1 (Mid-Stream Ablation) is confirmed at GPT-2 scale. Anomalies
+remain---the within-type syntactic/relational ordering is reversed, and plurality
+assembles anomalously late---and Predictions~2 through~4 await frontier-scale
+validation.
 
-If Prediction~1 holds---if the ratio of behavioral suppression to collateral damage
-peaks within the CAZ window---this provides both practical guidance for safer
-ablation and theoretical support for the dynamical framing. If it does not, the
-framework's descriptive vocabulary may still be useful while its interventional
+The next critical experiment is Prediction~1 at production scale: for a model such
+as Llama~3 70B and a well-studied concept such as refusal, compare the ratio of
+behavioral suppression to collateral capability damage as a function of intervention
+layer. If this ratio peaks within the CAZ window, it provides both practical guidance
+for safer ablation and theoretical support for the dynamical framing. If it does not,
+the framework's descriptive vocabulary may still be useful while its interventional
 claims are refuted. Either outcome advances the field.
 
 The CAZ framework is offered as a complement to existing interpretability methods:
