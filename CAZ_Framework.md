@@ -210,7 +210,7 @@ When a concept has multiple assembly regions, the sub-representation at a given 
 
 The dom_vector at the shallow assembly peak should correlate with token embedding vectors for concept-associated words (e.g., "reliable", "dubious" for credibility). The dom_vector at the deep peak should show lower correlation with token embeddings and higher dependence on multi-token contextual patterns.
 
-**Status**: Not yet tested. Requires forward passes to extract embedding matrices. Experimental script prepared.
+**Status**: **Not supported by initial test.** Token embedding probing (cosine similarity between peak dom_vectors and concept-relevant token embeddings) yields near-zero values (~0.02) at both peaks, with no significant difference (Wilcoxon p = 0.82). Neither peak resembles raw token embeddings. The lexical/compositional distinction may operate at a higher level of abstraction than direct embedding alignment — the shallow feature could depend on token identity through multi-layer composition rather than literally pointing toward any single token's embedding vector. Requires alternative experimental designs: per-token position attribution, attention knockout, or probing classifiers trained at each peak.
 
 ### 4.7 Multi-Modality as Architectural Property
 
