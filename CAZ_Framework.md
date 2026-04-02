@@ -6,13 +6,13 @@
 *Independent Researcher*
 jamesrahenry@henrynet.ca
 
-March 2026
+March 2026 (revised April 2026)
 
 ---
 
 ## Abstract
 
-Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): the contiguous sequence of middle-to-late layers across which a semantic concept transitions from vague syntactic probability to a rigid, geometrically extractable direction. We formalize the CAZ through three layer-wise metrics—Separation, Concept Coherence, and Concept Velocity—and derive a principled method for identifying CAZ boundaries without manual layer sweeps. The framework generates four testable predictions, including the Mid-Stream Ablation Hypothesis: that orthogonal projection ablation applied *within* the CAZ produces superior behavioral suppression with lower collateral capability damage than post-CAZ ablation, offering a candidate explanation for the elevated KL divergences observed in abliteration work. We situate the CAZ within the emerging geometric interpretability program as a complement to existing feature-extraction and manifold-level methods.
+Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): the sequence of layers across which a semantic concept transitions from vague syntactic probability to a rigid, geometrically extractable direction. We formalize the CAZ through three layer-wise metrics—Separation, Concept Coherence, and Concept Velocity—and derive a principled method for identifying CAZ boundaries without manual layer sweeps. Empirical validation across 22 models and 7 concepts reveals that the separation curve S(l) is frequently **multimodal**: a single human concept label can map to multiple distinct assembly regions at different processing depths, each encoding a geometrically distinct sub-representation (mean cosine similarity between peaks ≈ 0.3). Cross-architecture alignment shows that these sub-representations converge independently — shallow features align with shallow features across models, and deep features align with deep features, but cross-depth alignment is significantly weaker (p < 0.01 for all 6 concepts tested). This refines the Platonic Representation Hypothesis: representational convergence is stratified by processing depth, not monolithic. The framework generates seven testable predictions spanning ablation dynamics, cross-architecture stability, and the relationship between concept abstraction and assembly structure.
 
 ---
 
@@ -108,13 +108,32 @@ where *k* is the smoothing half-window. A practical heuristic is k = ⌊L/24⌋,
 
 ### 3.3 CAZ Boundary Detection
 
-The CAZ boundaries are derived from the velocity profile:
+#### Single-Region Detection (Velocity-Based)
+
+When the S(l) curve is unimodal, CAZ boundaries are derived from the velocity profile:
 
 - **CAZ Entry** (l_start): The first layer where v_concept(l) exceeds a sustained positive threshold θ₊.
 - **CAZ Peak** (l_max): The layer where S(l) reaches its absolute maximum. This corresponds to the "best layer" of conventional interpretability.
 - **CAZ Exit** (l_end): The layer where v_concept(l) becomes consistently negative, marking the onset of post-CAZ degradation.
 
 The conventional best-layer heuristic extracts V_concept at l_max. CAZ-aware extraction uses the full interval [l_start, l_end].
+
+#### Multi-Region Detection (CAZ Profiles)
+
+Empirical analysis across 22 models reveals that the S(l) curve is frequently **multimodal** — a single concept can produce multiple significant local maxima at different depths. In these cases, the velocity-based boundary detector wraps a single contiguous zone around the global maximum and is blind to secondary peaks.
+
+The **CAZ Profile** generalizes the single-region CAZ to a sequence of assembly regions:
+
+1. Detect all significant local maxima in S(l) using prominence-based peak detection (minimum prominence = 10% of global max separation).
+2. Identify **saddle points** — the local minima between consecutive peaks — as natural region boundaries.
+3. Each region spans from one saddle to the next, with the first region starting at layer 0 and the last ending at the final layer.
+
+A CAZ Profile is characterized by:
+- **n_regions**: Number of distinct assembly regions (1 = unimodal, 2+ = multimodal)
+- **dominant region**: The region with the highest peak separation
+- Per-region: start, peak, end, width, peak separation, coherence, rise/fall asymmetry
+
+Multimodal profiles are common: credibility shows 2+ peaks in 73% of 22 models tested; certainty, negation, and causation each show multimodality in ~27% of models. The prevalence of multimodality varies by architecture family (Qwen 2.5: 57–86% of concepts multimodal; Gemma 2: subtle structure below 10% prominence threshold) rather than by model scale.
 
 ### 3.4 Multi-Layer Concept Extraction
 
@@ -127,6 +146,21 @@ Three extraction methods should be compared empirically:
 3. **Single-layer (baseline)**: The standard DoM vector at l_max.
 
 If methods (1) or (2) consistently outperform (3) on downstream steering and classification tasks, this validates the dynamical framing as more than descriptive vocabulary. If they do not, the framework may still provide useful theoretical structure while failing to improve practical extraction—which is itself worth establishing.
+
+### 3.5 Sub-Representations and Depth-Stratified Convergence
+
+When a concept's S(l) curve is multimodal, the dom_vector (first principal component of contrastive activations) at each peak defines a distinct linear direction. Empirical measurement shows these directions are **geometrically distinct**: across all multimodal concept × model pairs, the cosine similarity between the shallow and deep peak dom_vectors averages 0.2–0.4 (Section 6.5). The two peaks are not the same feature at different amplitudes — they are different linear features that both happen to separate the same contrastive classes.
+
+This implies that a single human concept label ("credibility", "negation") maps to **multiple sub-representations** at different processing depths. Interpretive evidence suggests:
+
+- **Shallow sub-representations** form near the embedding layers, likely driven by lexical cues (concept-associated words).
+- **Deep sub-representations** form in mid-to-late layers, likely driven by compositional processing (contextual inference, scope, pragmatic reasoning).
+
+The transition between sub-representations at the saddle point is abrupt, not gradual: layer×layer cosine similarity matrices show block-diagonal structure, and adjacent-layer cosine similarity dips sharply at the saddle point (to as low as 0.35 in some models), indicating a phase transition between distinct encoding regimes.
+
+Cross-architecture alignment confirms that these sub-representations are **independently universal**: depth-matched alignment (shallow↔shallow, deep↔deep) significantly exceeds cross-depth alignment (shallow↔deep, deep↔shallow) across all 6 tested concepts (p < 0.01 for each), with grand means of 0.651 (matched) vs. 0.270 (mismatched). Deep↔deep alignment is consistently the strongest (mean 0.76), suggesting the compositional sub-representation is the most universal feature that models converge on.
+
+This finding refines the Platonic Representation Hypothesis [Huh et al., 2024]: representational convergence is not monolithic but **stratified by processing depth**, with each stage of concept assembly converging independently across architectures.
 
 ---
 
@@ -161,6 +195,30 @@ More abstract concepts (e.g., "trustworthiness," "moral valence") should have wi
 **Prediction 4**: Post-CAZ re-entanglement correlates with unembedding matrix structure.
 
 The degradation of clean concept geometry in late layers is not noise but a structural consequence of preparing the residual stream for logit projection. Concepts whose associated vocabulary tokens are distributionally similar in the unembedding space—close in embedding distance—should show more post-CAZ degradation than concepts with distributionally distinct vocabulary. This would explain why some concepts retain clean geometry into late layers (their vocabulary is well-separated) while others degrade early (their vocabulary clusters).
+
+### 4.5 Depth-Stratified Representational Convergence
+
+**Prediction 5**: Cross-architecture alignment is depth-matched.
+
+When a concept has multiple assembly regions, the sub-representation at a given processing depth should align more strongly with the corresponding-depth sub-representation in other architectures than with a different-depth sub-representation. Specifically, after Procrustes rotation, cosine(shallow_A, shallow_B) > cosine(shallow_A, deep_B) and cosine(deep_A, deep_B) > cosine(deep_A, shallow_B).
+
+**Status**: **Confirmed.** Tested across 6 concepts and 56 model pairs (same-dimension Procrustes and cross-dimension regression). Depth-matched alignment (mean 0.651) significantly exceeds mismatched (mean 0.270) for all 6 concepts (p < 0.01 for each). See Section 6.5.
+
+### 4.6 Lexical vs. Compositional Sub-Representations
+
+**Prediction 6**: Shallow peaks encode lexical features; deep peaks encode compositional features.
+
+The dom_vector at the shallow assembly peak should correlate with token embedding vectors for concept-associated words (e.g., "reliable", "dubious" for credibility). The dom_vector at the deep peak should show lower correlation with token embeddings and higher dependence on multi-token contextual patterns.
+
+**Status**: Not yet tested. Requires forward passes to extract embedding matrices. Experimental script prepared.
+
+### 4.7 Multi-Modality as Architectural Property
+
+**Prediction 7**: Multi-modality prevalence is determined by architecture, not scale.
+
+The fraction of concepts showing multimodal S(l) curves should vary more between architectural families (attention mechanism, activation function, training data) than between scales within a family.
+
+**Status**: **Supported with nuance.** Multi-modality does not correlate with model parameter count (ρ = 0.11, p = 0.63) but varies dramatically by family: Qwen 2.5 shows deep, prominent bimodality (valley depths of 26–36% between peaks); Gemma 2 shows subtle structure (valley depths of 8–15%) that falls below the 10% prominence threshold used for peak detection. The architectural difference is in degree of sub-representation separation, not binary presence/absence.
 
 ---
 
@@ -219,11 +277,62 @@ At GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
 
 **Prediction 2 (Architecture-Stable Positioning)** is partially supported — the broad two-cluster ordering holds across architectures — but proper validation requires same-scale cross-architecture comparison (e.g., GPT-Neo-1.3B vs. OPT-1.3B vs. GPT-2-XL at matched parameter count).
 
-**Predictions 3 and 4** (CAZ width and post-CAZ logit interference) have not yet been tested and require either frontier-scale models or a wider concept vocabulary with operationalized abstraction levels.
+**Prediction 3** (CAZ width correlates with abstraction) receives initial support from the structural analysis: affective and epistemic concepts have wider CAZs (median ~59% of model depth) than relational and syntactic concepts (median ~52%). See Section 6.5.
 
-### 6.4 Frontier-Scale Validation
+**Prediction 4** (post-CAZ degradation correlates with unembedding structure) has not yet been directly tested, but structural analysis shows post-CAZ decay is gentle (concepts retain ~80% of peak separation) with no strong correlation between peak depth and decay severity.
 
-Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The proxy-scale results are sufficient to establish that the CAZ is a real and measurable phenomenon; they are not sufficient to confirm the architecture-stability and abstraction-width predictions at production model scale.
+### 6.4 Multi-Family Scale Ladders (22 Models)
+
+The CAZ framework was validated at larger scale across 22 models in 5 architectural families (Pythia 70M–6.9B, GPT-2 124M–1.5B, OPT 125M–6.7B, Qwen 2.5 0.5B–7B, Gemma 2 2B–9B), implemented in [caz_scaling](https://github.com/jamesrahenry/caz_scaling).
+
+**Universal concept ordering**: The relative ordering of concept assembly depth is consistent across all 5 families: credibility (earliest) → negation → causation → temporal_order → sentiment → certainty → moral_valence (deepest). Affective concepts assemble deepest in every family tested.
+
+**Prediction 2 refinement**: Concept *ordering* is universal; absolute depth percentages are family-specific. The prediction is supported for relative ordering but not for absolute positions.
+
+### 6.5 Structural Analysis: Beyond the Peak (April 2026)
+
+Analysis of the full S(l) curve shape across the 22-model dataset revealed structural features invisible to peak-only analysis.
+
+**Multimodal assembly**: 73% of credibility model runs show 2+ significant separation peaks. Other concepts: certainty, negation, causation ~27%; moral_valence 18%; sentiment 9%. See Section 3.3 for detection methodology.
+
+**Sub-representations are distinct directions**: Across all multimodal concept × model pairs, cosine similarity between the dom_vector at the shallow peak and the deep peak:
+
+| Concept | N multimodal | Mean cos(shallow, deep) |
+|---------|-------------|------------------------|
+| credibility | 17 | 0.379 |
+| sentiment | 2 | 0.433 |
+| certainty | 6 | 0.294 |
+| causation | 6 | 0.212 |
+| moral_valence | 4 | 0.241 |
+| negation | 6 | 0.206 |
+| temporal_order | 5 | 0.156 |
+
+Direction similarity decreases with inter-peak distance: Pearson r(layer_gap, cosine) = −0.50, p = 0.0005.
+
+**Depth-matched cross-architecture alignment (Prediction 5)**:
+
+| Concept | N pairs | Matched (S↔S, D↔D) | Mismatched (S↔D, D↔S) | p |
+|---------|---------|--------------------|-----------------------|------|
+| negation | 15 | +0.622 | +0.218 | <0.0001 |
+| causation | 10 | +0.631 | +0.276 | <0.0001 |
+| certainty | 10 | +0.621 | +0.300 | <0.0001 |
+| temporal_order | 6 | +0.734 | +0.200 | <0.0001 |
+| credibility | 9 | +0.651 | +0.386 | 0.0013 |
+| moral_valence | 6 | +0.648 | +0.242 | 0.0060 |
+
+All 6 concepts significant. Deep↔deep alignment is consistently strongest (mean 0.76); the compositional sub-representation is the most universal feature across architectures.
+
+**Phase transitions at saddle points**: Layer×layer dom_vector cosine similarity matrices show block-diagonal structure in multimodal models, with adjacent-layer cosine dropping to as low as 0.35 at the saddle point — a near-orthogonal rotation between consecutive layers, indicating a discrete transition between sub-representations rather than smooth drift.
+
+**Structural shape features**:
+- CAZ width: median ~50% of model depth. Affective/epistemic wider (~59%) than relational/syntactic (~52%).
+- Asymmetry: rise-to-fall ratio ~10:1. Concepts ramp gradually and cliff-drop after peak.
+- S-C coupling: epistemic concepts show positive S-C correlation (clean linear crystallization); relational/affective show negative (distributed multi-dimensional assembly).
+- Post-CAZ decay: concepts retain ~80% of peak separation; decay is gentle, not catastrophic.
+
+### 6.6 Frontier-Scale Validation
+
+Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The 22-model results are sufficient to establish multimodal assembly and depth-stratified convergence as robust phenomena across the 70M–9B parameter range.
 
 ---
 
@@ -247,21 +356,25 @@ The separation metric assumes the concept manifold is approximately linearly sep
 
 The framework does not account for which token positions carry concept information. Zhao et al. [2025] showed that harmfulness and refusal encode at different token positions. CAZ boundaries may vary by token position as well as by layer.
 
+**Multimodal detection threshold sensitivity**
+
+The classification of a concept run as "multimodal" depends on the prominence threshold for peak detection (default: 10% of global max separation). Some architectures (Gemma 2) show subtle bimodal structure with valley depths of 8–15% that falls just below this threshold. Binary multimodal/unimodal classification should be interpreted as a convenience — the underlying phenomenon is a continuum of sub-representation separation depth.
+
 **Causal vs. correlational**
 
-High separation at a layer does not establish that the concept is *used* at that layer for downstream computation. Causal validation via ablation and activation patching is required to distinguish geometrically present concepts from epiphenomenal structure.
+High separation at a layer does not establish that the concept is *used* at that layer for downstream computation. Causal validation via ablation and activation patching is required to distinguish geometrically present concepts from epiphenomenal structure. This is especially important for multimodal concepts: the existence of two separation peaks does not establish that the model *uses* both — one could be epiphenomenal while the other drives downstream behavior. Multi-modal ablation experiments (ablating one peak while preserving the other) are needed to establish functional independence.
 
 ---
 
 ## 8. Conclusion
 
-The Concept Assembly Zone provides a framework for analyzing how Transformers construct semantic representations across their depth. By shifting from single-layer snapshots to cross-layer flow analysis, it generates specific, testable predictions about concept extraction quality, optimal ablation depth, and the geometric origins of the SAE dark matter.
+The Concept Assembly Zone provides a framework for analyzing how Transformers construct semantic representations across their depth. The initial formulation assumed a single contiguous assembly zone per concept — empirical validation has shown this is a special case. The general case is a **CAZ profile**: a sequence of one or more assembly regions, each encoding a geometrically distinct sub-representation of the same semantic concept.
 
-The framework's value is empirical, not definitional. The minimal viable experiment is straightforward: for a small open-weight model and a well-studied concept such as refusal, compare single-layer extraction against CAZ-windowed extraction on steering effectiveness, and compare ablation at different layer depths against the CAZ-predicted optimal intervention point.
+This revision strengthens the framework in two ways. First, it explains anomalies in the original analysis — the apparent "position instability" of credibility across architectures is resolved by recognizing that models have two stable peaks, and the reported peak depends on which one is marginally taller. Second, it generates a new class of predictions about depth-stratified representational convergence, which are confirmed across 6 concepts and 56 model pairs.
 
-If Prediction 1 holds—if the ratio of behavioral suppression to collateral damage peaks within the CAZ window—this provides both practical guidance for safer ablation and theoretical support for the dynamical framing. If it does not, the framework's descriptive vocabulary may still be useful while its interventional claims are refuted. Either outcome advances the field.
+The key empirical finding is that representational convergence across architectures is not monolithic: shallow lexical features align with other models' shallow features, deep compositional features align with deep features, but cross-depth alignment is significantly weaker. This refines the Platonic Representation Hypothesis — models converge on a shared **vocabulary of depth-stratified sub-representations** rather than a single unified concept direction.
 
-The CAZ framework is offered as a complement to existing interpretability methods: extending the layer-sweep heuristic into a dynamical account, and connecting single-layer feature extraction to the emerging geometric program that the field is converging toward. Whether it survives contact with data is an open question we invite others to test.
+Of the seven predictions, two are confirmed (P1 at small scale, P5 across 6 concepts), two are partially supported (P2 for relative ordering, P3 for width-abstraction correlation), one is supported with nuance (P7 — architecture-dependent, not scale-dependent), and two await experimental testing (P4, P6). The framework has survived extensive contact with data while requiring substantive revision of its core assumption — a productive outcome that suggests the dynamical systems perspective on concept formation is capturing real structure in how Transformers process information.
 
 ---
 
