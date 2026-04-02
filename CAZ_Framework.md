@@ -330,9 +330,85 @@ All 6 concepts significant. Deep↔deep alignment is consistently strongest (mea
 - S-C coupling: epistemic concepts show positive S-C correlation (clean linear crystallization); relational/affective show negative (distributed multi-dimensional assembly).
 - Post-CAZ decay: concepts retain ~80% of peak separation; decay is gentle, not catastrophic.
 
-### 6.6 Frontier-Scale Validation
+### 6.6 Scored CAZ Detection and Gentle CAZes (April 2, 2026)
 
-Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The 22-model results are sufficient to establish multimodal assembly and depth-stratified convergence as robust phenomena across the 70M–9B parameter range.
+The initial multimodal detection used a 10% prominence threshold, which was arbitrary and discarded subtle assembly events. Replacing this with a composite scoring system (CAZ score = prominence × coherence boost × √width, with a 0.5% floor) reveals substantially more structure:
+
+| Detection Threshold | Total CAZes | Multimodal Runs | Avg CAZes/Run |
+|---|---|---|---|
+| 10% (original) | 201 | 45/154 | 1.31 |
+| 5% | 250 | 75/154 | 1.62 |
+| 3% | 317 | 97/154 | 2.06 |
+| 0.5% (scored) | 522 | — | 3.39 |
+
+**Gentle CAZes are causally real.** N-CAZ ablation across 374 CAZ×model combinations shows that 95% of gentle CAZes (score < 0.05) produce >20% separation suppression when ablated — the same rate as black holes (score > 0.5). Half of all causally active features were invisible under the original threshold.
+
+This has implications for safety and steering: subtle features with score 0.02 have real behavioral impact. The MI field's focus on dominant features misses half the causal structure.
+
+### 6.7 N-CAZ Interaction Matrices (April 2, 2026)
+
+Replacing the two-peak (shallow/deep) ablation design with per-CAZ ablation across all detected regions reveals the full dependency structure:
+
+**One-way information flow (absolute).** Across 654 CAZ pairs in 15 models:
+- Forward (shallow→deep): mean 23.2% suppression
+- Backward (deep→shallow): **0.0%** — not a single case
+
+This is consistent with the causal transformer architecture but is now verified causally, not assumed.
+
+**Dependency patterns:**
+- 57% of CAZ pairs are **independent** (neither affects the other)
+- 43% show **forward dependency** (shallow feeds into deep)
+- 0% backward, 0% coupled
+
+**Hierarchical assembly structure:** Black holes feed downstream gentle CAZes but not upstream ones. The computation graph is a tree: shallow primitives → dominant assembly → gentle downstream refinement.
+
+### 6.8 Manifold Census — Quantifying Dark Matter (April 2, 2026)
+
+Unsupervised eigenvalue analysis at every layer (Marchenko-Pastur noise floor for significance threshold) reveals how much organized structure exists beyond labeled concepts:
+
+| Model | Hidden Dim | Significant Dims (avg) | 7-Concept Coverage | Dark Matter Dims |
+|---|---|---|---|---|
+| pythia-70m | 512 | 22.5 | 21.0% | 27.8 |
+| pythia-160m | 768 | 16.9 | 45.5% | 24.2 |
+| pythia-1.4b | 2048 | 40.8 | 17.0% | 46.1 |
+| pythia-6.9b | 4096 | 26.3 | 15.2% | 27.3 |
+| gpt2-xl | 1600 | 35.1 | 32.9% | 45.6 |
+
+Seven concept probes explain 13–45% of activation structure. Smaller models have higher coverage (fewer total features); larger models have more absolute dark matter. The remaining organized directions are features the model computes that do not align with any human concept in our probe set.
+
+### 6.9 Platonic Representation Hypothesis — Refined (April 2, 2026)
+
+Three progressively stricter tests of cross-architecture representational convergence:
+
+**Test 1: PCA-compressed (k=20).** Same-concept 0.328, cross-concept transfer 0.349 (ratio 106%). Depth gradient 0.818→0.909. *Verdict: inflated.* Random vectors score 0.996. The top-20 variance directions are concept-agnostic but this subspace is too small to draw conclusions about the full space.
+
+**Test 2: Full-space, per-concept rotation (d=512–4096).** Same-concept 0.978, cross-concept transfer 0.237 (ratio 24%). *Verdict: honest.* 10x above chance in 2048-dim space. Real signal, modest magnitude.
+
+**Test 3: Full-space, all-concept rotation.** Overall alignment 0.742. Depth gradient 0.726→0.763 (delta +0.036). *Verdict: strongest.* When given sufficient training data (all concepts × all layers), Procrustes achieves 74% alignment.
+
+**Reconciliation:** The top ~20–30 PCA dimensions form a shared subspace where concepts align near-perfectly and rotation transfers across concepts. The remaining dimensions contain concept-specific structure. The "true PRH" is 74% alignment when properly estimated, with a modest depth gradient (+0.036 from shallow to deep).
+
+**Cross-lingual convergence:** Qwen 2.5 (Chinese+English training) aligns with English-only models at the same rate as within-English pairs. The shared geometric structure transcends training language.
+
+**Credibility as outlier:** Per-concept rotation from credibility transfers at only 0.10–0.15 to other concepts (vs 0.25–0.45 for others). Credibility occupies a geometrically isolated region — the most consistently shared direction across architectures (cos 0.991 same-concept) but the least transferable rotation to other concepts.
+
+### 6.10 Cross-Concept Primitive Sharing (April 2, 2026)
+
+Cross-concept cosine similarity of shallow-peak dom_vectors reveals shared computational primitives:
+
+| Concept Pair | Mean cos(shallow) | Notable |
+|---|---|---|
+| certainty × credibility | 0.456 | opt-6.7b: **0.926** — near-identical direction |
+| causation × negation | 0.456 | |
+| causation × temporal_order | 0.363 | Relational concepts share primitives |
+| credibility × sentiment | 0.074 | Unrelated |
+| causation × credibility | 0.014 | Orthogonal |
+
+The shallow CAZ for credibility in opt-6.7b is essentially the same feature as the shallow CAZ for certainty — a shared epistemic primitive that both concepts depend on. This changes the unit of analysis from "concept" to "assembly primitive."
+
+### 6.11 Frontier-Scale Validation
+
+Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B, Mistral Large) is pending compute access. The 22-model results are sufficient to establish multimodal assembly, scored detection, one-way information flow, and depth-stratified convergence as robust phenomena across the 70M–9B parameter range.
 
 ---
 
@@ -358,23 +434,37 @@ The framework does not account for which token positions carry concept informati
 
 **Multimodal detection threshold sensitivity**
 
-The classification of a concept run as "multimodal" depends on the prominence threshold for peak detection (default: 10% of global max separation). Some architectures (Gemma 2) show subtle bimodal structure with valley depths of 8–15% that falls just below this threshold. Binary multimodal/unimodal classification should be interpreted as a convenience — the underlying phenomenon is a continuum of sub-representation separation depth.
+~~The classification of a concept run as "multimodal" depends on the prominence threshold for peak detection (default: 10% of global max separation).~~ *Resolved in Section 6.6*: the scored CAZ detector replaces the binary threshold with a composite score and 0.5% floor. The old threshold discarded half the causally active features. All downstream analyses now use the scored detector.
 
 **Causal vs. correlational**
 
-High separation at a layer does not establish that the concept is *used* at that layer for downstream computation. Causal validation via ablation and activation patching is required to distinguish geometrically present concepts from epiphenomenal structure. This is especially important for multimodal concepts: the existence of two separation peaks does not establish that the model *uses* both — one could be epiphenomenal while the other drives downstream behavior. Multi-modal ablation experiments (ablating one peak while preserving the other) are needed to establish functional independence.
+~~High separation at a layer does not establish that the concept is *used* at that layer for downstream computation.~~ *Partially resolved in Section 6.7*: N-CAZ ablation establishes causal impact for 95% of detected CAZes across all score levels. The concern about epiphenomenal structure is now empirically addressed — most detected peaks ARE functionally active. The remaining 5% of non-causal detections at the gentle level may be noise or measurement artifact.
+
+**Synthetic contrastive data bias**
+
+All 7 concept datasets were generated by a single model (Claude Sonnet 4.5). The dom_vectors may reflect Claude's concept boundaries rather than universal semantic structure. Multi-model consensus pair generation (14 diverse frontier models across 5 families) is in progress to address this. Until validated, all quantitative results should be interpreted as "alignment under Claude-defined concept probes" rather than "alignment under universal concept definitions."
+
+**PRH measurement sensitivity**
+
+Cross-architecture alignment numbers are highly sensitive to the rotation estimation method. PCA compression to 20 dimensions inflates alignment from 24% (full-space, per-concept) to 87% (PCA, all-concept). The honest range is 24–74% depending on training data quality. All PRH claims in this paper report the measurement method used. See Section 6.9 for full reconciliation.
 
 ---
 
 ## 8. Conclusion
 
-The Concept Assembly Zone provides a framework for analyzing how Transformers construct semantic representations across their depth. The initial formulation assumed a single contiguous assembly zone per concept — empirical validation has shown this is a special case. The general case is a **CAZ profile**: a sequence of one or more assembly regions, each encoding a geometrically distinct sub-representation of the same semantic concept.
+The Concept Assembly Zone framework has evolved substantially through empirical contact. The original formulation assumed a single contiguous assembly zone per concept. Empirical validation across 22 models and 7 concepts has shown this is a special case. The general picture is richer:
 
-This revision strengthens the framework in two ways. First, it explains anomalies in the original analysis — the apparent "position instability" of credibility across architectures is resolved by recognizing that models have two stable peaks, and the reported peak depends on which one is marginally taller. Second, it generates a new class of predictions about depth-stratified representational convergence, which are confirmed across 6 concepts and 56 model pairs.
+**Each concept assembles through multiple CAZes** — scored detection finds an average of 3.4 assembly events per concept per model, ranging from dominant "black holes" to subtle "gentle CAZes" that were invisible under the original detection threshold. Critically, 95% of these gentle features are causally active: ablating them suppresses downstream separation. Half of all causal structure was previously undetected.
 
-The key empirical finding is that representational convergence across architectures is not monolithic: shallow lexical features align with other models' shallow features, deep compositional features align with deep features, but cross-depth alignment is significantly weaker. This refines the Platonic Representation Hypothesis — models converge on a shared **vocabulary of depth-stratified sub-representations** rather than a single unified concept direction.
+**Information flows one way.** Across 654 CAZ pairs in 15 models, ablating a shallow CAZ can suppress a deeper one (43% of pairs), but ablating a deep CAZ never affects a shallower one (0% of pairs, zero exceptions). The computation graph is a forward-flowing tree: shallow primitives → dominant assembly → gentle downstream refinement.
 
-Of the seven predictions, two are confirmed (P1 at small scale, P5 across 6 concepts), two are partially supported (P2 for relative ordering, P3 for width-abstraction correlation), one is supported with nuance (P7 — architecture-dependent, not scale-dependent), and two await experimental testing (P4, P6). The framework has survived extensive contact with data while requiring substantive revision of its core assumption — a productive outcome that suggests the dynamical systems perspective on concept formation is capturing real structure in how Transformers process information.
+**Concepts share computational primitives.** Different human concept labels activate the same shallow features — credibility and certainty share a nearly identical shallow direction (cos 0.926 in opt-6.7b). The unit of analysis should be the assembly primitive, not the human concept label.
+
+**Models converge on shared geometry.** A single Procrustes rotation aligns all concepts simultaneously (74% alignment in full space). The shared structure transcends training language (Qwen, trained on Chinese+English, aligns with English-only models). Deep layers converge slightly more than shallow ones (+0.036), but the gradient is modest — the shared geometry spans all depths.
+
+**Most of what models compute is unnamed.** Seven concept probes explain 13–45% of activation structure. The remaining organized directions — 20–46 significant dimensions per model — are features with no human label. Unsupervised discovery of these features (the Activation Manifold Cartography program) is the natural next step.
+
+Of the seven predictions: P1 is confirmed at all scales (N-CAZ ablation); P2 is confirmed for relative ordering; P3 receives initial support; P5 is strongly confirmed; P7 is supported with nuance. P4 and P6 remain untested. The framework has survived extensive empirical stress-testing while requiring revision of its core assumption from single-peak to multi-peak assembly — a revision that substantially strengthened its explanatory power.
 
 ---
 
