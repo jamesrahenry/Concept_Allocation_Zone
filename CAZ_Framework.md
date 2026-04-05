@@ -1,6 +1,6 @@
 # The Concept Assembly Zone
 
-**A Dynamical Systems Framework for Cross-Layer Semantic Manifold Tracking in Transformers**
+**Tracking How Concepts Form Across Transformer Depth**
 
 **James Henry**
 *Independent Researcher*
@@ -12,7 +12,7 @@ March 2026 (revised April 5, 2026)
 
 ## Abstract
 
-Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): the sequence of layers across which a semantic concept transitions from vague syntactic probability to a rigid, geometrically extractable direction. We formalize the CAZ through three layer-wise metrics—Separation, Concept Coherence, and Concept Velocity—and derive a principled method for identifying CAZ boundaries without manual layer sweeps. Empirical validation across 30 models from 7 architectural families and 7 concepts reveals that the separation curve S(l) is frequently **multimodal**: a single human concept label can map to multiple distinct assembly regions at different processing depths, each encoding a geometrically distinct sub-representation (mean cosine similarity between peaks ≈ 0.3). A scored detection method with a 0.5% prominence floor uncovers an additional category of subtle assembly events ("gentle CAZes") that are invisible to standard peak detection but are causally active in 95% of cases. Cross-architecture alignment shows that sub-representations converge independently — shallow features align with shallow features across models, and deep features align with deep features, but cross-depth alignment is significantly weaker (p < 0.01 for all 6 concepts tested). This refines the Platonic Representation Hypothesis: representational convergence is stratified by processing depth, not monolithic. The framework generates seven testable predictions, of which five have been empirically evaluated, and provides a reference implementation in the open-source rosetta\_tools library (v1.0.0).
+Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): a layer-level event where the model allocates geometric directions in activation space to serve one or more concepts. We formalize the CAZ through three layer-wise metrics — Separation, Concept Coherence, and Concept Velocity — and derive principled methods for identifying CAZ boundaries without manual layer sweeps. A CAZ is not a concept: it is the computational event where the model organizes its geometry to make a concept measurably separable. Multiple concepts may share a CAZ, and a single concept typically participates in multiple CAZes across depth. Empirical validation across 30 models from 7 architectural families and 7 concepts reveals that the separation curve S(l) is frequently **multimodal**, with a scored detection method uncovering an additional category of subtle assembly events ("gentle CAZes") that are invisible to standard peak detection but are causally active in 95% of cases. The framework generates seven testable predictions, of which five have been empirically evaluated, and provides a reference implementation in the open-source rosetta\_tools library (v1.0.0).
 
 ---
 
@@ -22,13 +22,16 @@ The dominant paradigm in mechanistic interpretability extracts concept represent
 
 Transformers are iterative dynamical systems. Each layer applies a sequence of attention and MLP operations that *write* new information into the residual stream, modifying and extending what prior layers contributed [Elhage et al., 2021]. A concept observed at Layer 15 was shaped by Layers 10 through 14 before it; the best-layer heuristic tells us where the concept is most legible, not how it arrived there.
 
-This paper introduces the **Concept Assembly Zone** (CAZ) framework, which extends the interpretability toolkit from anatomy—*where is the concept most visible?*—to dynamical flow—*how does the concept form?* The CAZ is defined as the specific sequence of layers where a semantic concept transitions from vague syntactic entanglement to a rigid, mathematically extractable geometric direction.
+This paper introduces the **Concept Assembly Zone** (CAZ) framework, which extends the interpretability toolkit from anatomy—*where is the concept most visible?*—to dynamical flow—*how does the concept form?* The CAZ is defined as a layer-level event where the model allocates geometric directions in activation space such that a semantic concept becomes measurably separable. A CAZ is not the concept itself — each CAZ is a location in the layers where the model's geometry expresses influence to serve a concept.
 
-The framework has immediate practical implications. If concepts are assembled across a window of layers rather than peaking at a point, then:
+The framework has immediate practical implications:
 
-1. CAZ-windowed extraction methods may capture information present in the assembly dynamics that single-layer methods do not;
-2. Ablation interventions applied during concept assembly may produce qualitatively different effects than interventions applied after assembly is complete;
-3. The "dark matter" of unexplained model behavior [Engels et al., 2024] may partially correspond to in-progress concept construction that hasn't yet resolved into the linear directions that sparse autoencoders (SAEs) are designed to capture.
+1. **Richer extraction.** CAZ-windowed extraction methods may capture information present in the assembly dynamics that single-layer methods do not.
+2. **Principled intervention.** Ablation at different points in the CAZ chain produces qualitatively different effects. The framework provides a geometric basis for selecting intervention depth.
+3. **Dark matter connection.** The structured residual left unexplained by sparse autoencoders [Engels et al., 2024] may partially correspond to in-progress concept construction within CAZes — transitional representations that resist linear decomposition at any single layer.
+4. **Cross-model transfer.** Concept directions extracted at a CAZ in one model can be aligned to equivalent directions in another model via a single rotation, enabling transferable interpretability tooling across architectures.
+5. **Understanding alignment training.** CAZ profiles provide a lens for studying what preference optimization changes in a model — not whether concepts exist, but where and how they are assembled.
+6. **Concept inventory.** By tracking which geometric directions are allocated at each CAZ and which remain unaligned with any human concept probe, the framework provides a systematic approach to cataloguing what a model computes — both the named and the unnamed.
 
 The CAZ framework generates specific, falsifiable predictions. Section 4 states seven such predictions; Section 6 reports empirical results for five of them across 30 models and 7 architectural families. The reference implementation is provided as rosetta\_tools [Henry, 2026], an open-source Python library. We are explicit about the assumptions the framework inherits from the broader interpretability literature.
 
@@ -55,6 +58,8 @@ Gurnee et al. [2025] demonstrated that character counts are represented on low-d
 ---
 
 ## 3. The Concept Assembly Zone
+
+A CAZ is not a concept. It is a layer-level computational event where the model allocates geometric directions in activation space to serve one or more concepts. The concept is the human label we project onto the geometry; the CAZ is the machinery the model uses to organize that geometry. A single CAZ may host multiple concepts simultaneously (48% do), and a single concept typically participates in multiple CAZes across depth (mean 3.4 per concept per model). The distinction matters: when we say "credibility has a CAZ at layer 10," we mean that layer 10 is where the model allocates a geometric direction that, when measured with a credibility probe, shows strong class separation — not that layer 10 "contains" credibility.
 
 ### 3.1 Concept Lifecycle
 
@@ -250,168 +255,23 @@ The CAZ framework operates in the same space as several established interpretabi
 
 ---
 
-## 6. Preliminary Empirical Results
+## 6. Proof of Concept
 
-The framework has been validated across 30 models from 7 architectural families (Pythia, GPT-2, OPT, Qwen 2.5, Gemma 2, Llama 3.2, Mistral) spanning 70M to 7B parameters. Initial results were obtained on the GPT-2 family; the full-scale validation uses the rosetta\_tools library [Henry, 2026] and is implemented in the companion repositories [Rosetta Manifold](https://github.com/jamesrahenry/Rosetta_Manifold) and [caz\_scaling](https://github.com/jamesrahenry/caz_scaling).
+To demonstrate that the CAZ metrics and detection methods produce meaningful results, we present a minimal example on GPT-2-XL (48 layers, 1.5B parameters) using 7 concepts with 100 contrastive pairs each.
 
-### 6.1 GPT-2-XL Results
+### 6.1 CAZ Detection
 
-At GPT-2-XL scale (48 layers, 100 contrastive pairs per concept):
+The separation curve S(l) for credibility in GPT-2-XL peaks at layer 46 (96% depth) with S = 0.736 — the strongest signal among the 7 concepts tested. The scored detector identifies 3 CAZes for this concept: a dominant peak at L46, and two gentle CAZes at earlier layers that are invisible under a 10% prominence threshold but produce >20% separation suppression when ablated.
 
-| Concept | Type | Peak layer | Relative depth | Peak S |
-|---|---|---|---|---|
-| temporal\_order | relational | L36 / 48 | 75% | 0.449 |
-| causation | relational | L37 / 48 | 77% | 0.488 |
-| negation | syntactic | L39 / 48 | 81% | 0.314 |
-| certainty | epistemic | L44 / 48 | 92% | 0.500 |
-| moral\_valence | affective | L44 / 48 | 92% | 0.294 |
-| sentiment | affective | L44 / 48 | 92% | 0.396 |
-| credibility | epistemic | L46 / 48 | 96% | 0.736 |
-| plurality | syntactic | L47 / 48 | 98% | 0.322 |
+Across all 7 concepts in this single model, the framework detects a consistent ordering by assembly depth: relational and syntactic concepts assemble in the 75–81% range; affective and epistemic concepts cluster in the 92–96% range.
 
-### 6.2 Confirmed Findings
+### 6.2 Scored Detection Reveals Hidden Structure
 
-**Prediction 1 (Mid-Stream Ablation Hypothesis)** is confirmed at GPT-2 scale: single-layer orthogonal projection ablation at the CAZ peak achieves 100% separation reduction on concept probes. This result does not extend to GPT-2-XL, where single-layer projection is insufficient — consistent with the expectation that 1.5B-scale models require multi-layer or weight-space intervention.
+Lowering the detection threshold from 10% to 0.5% (scored detection) increases the number of detected CAZes from 7 to 23 in this single model. The additional 16 gentle CAZes are not noise — ablation confirms causal impact for the majority.
 
-**Broad late-assembly ordering**: A clear two-cluster structure is observed. Relational and syntactic concepts (temporal\_order, causation, negation) assemble in the 75–81% depth range; affective and epistemic concepts (certainty, moral\_valence, sentiment, credibility) cluster in the 92–96% range. This separation is robust across the 8 architectures tested.
+### 6.3 Scope of Validation
 
-**Credibility** exhibits substantially stronger separation signal (S = 0.736) than all other concepts — more than 50% larger than the next strongest (certainty, S = 0.500) — suggesting a particularly well-defined concept direction.
-
-### 6.3 Anomalies and Open Questions
-
-**The within-type syntactic < relational ordering is reversed.** The framework predicted syntactic concepts would assemble earlier than relational ones; the data shows the opposite — causation and temporal\_order (relational) assemble at 75–77%, while negation (syntactic) assembles later at 81%. The ordering between types holds, but the within-type prediction does not.
-
-**Plurality is anomalously deep** (L47, 98% depth) — the deepest concept measured, deeper even than credibility. A syntactic concept assembling in the final layers of a 48-layer model is not explained by the current framework and warrants investigation at larger scale.
-
-**Prediction 2 (Architecture-Stable Positioning)** is partially supported — the broad two-cluster ordering holds across architectures — but proper validation requires same-scale cross-architecture comparison (e.g., GPT-Neo-1.3B vs. OPT-1.3B vs. GPT-2-XL at matched parameter count).
-
-**Prediction 3** (CAZ width correlates with abstraction) receives initial support from the structural analysis: affective and epistemic concepts have wider CAZs (median ~59% of model depth) than relational and syntactic concepts (median ~52%). See Section 6.5.
-
-**Prediction 4** (post-CAZ degradation correlates with unembedding structure) has not yet been directly tested, but structural analysis shows post-CAZ decay is gentle (concepts retain ~80% of peak separation) with no strong correlation between peak depth and decay severity.
-
-### 6.4 Multi-Family Scale Ladders (30 Models)
-
-The CAZ framework was validated across 30 models in 7 architectural families (Pythia 70M–6.9B, GPT-2 124M–1.5B, OPT 125M–6.7B, Qwen 2.5 0.5B–7B, Gemma 2 2B, Llama 3.2 1B–3B, Mistral 7B), with additional instruct-tuned variants for alignment training comparison.
-
-**Universal concept ordering**: The relative ordering of concept assembly depth is consistent across all 5 families: credibility (earliest) → negation → causation → temporal_order → sentiment → certainty → moral_valence (deepest). Affective concepts assemble deepest in every family tested.
-
-**Prediction 2 refinement**: Concept *ordering* is universal; absolute depth percentages are family-specific. The prediction is supported for relative ordering but not for absolute positions.
-
-### 6.5 Structural Analysis: Beyond the Peak
-
-Analysis of the full S(l) curve shape across the 22-model dataset revealed structural features invisible to peak-only analysis.
-
-**Multimodal assembly**: 73% of credibility model runs show 2+ significant separation peaks. Other concepts: certainty, negation, causation ~27%; moral_valence 18%; sentiment 9%. See Section 3.3 for detection methodology.
-
-**Sub-representations are distinct directions**: Across all multimodal concept × model pairs, cosine similarity between the dom_vector at the shallow peak and the deep peak:
-
-| Concept | N multimodal | Mean cos(shallow, deep) |
-|---------|-------------|------------------------|
-| credibility | 17 | 0.379 |
-| sentiment | 2 | 0.433 |
-| certainty | 6 | 0.294 |
-| causation | 6 | 0.212 |
-| moral_valence | 4 | 0.241 |
-| negation | 6 | 0.206 |
-| temporal_order | 5 | 0.156 |
-
-Direction similarity decreases with inter-peak distance: Pearson r(layer_gap, cosine) = −0.50, p = 0.0005.
-
-**Depth-matched cross-architecture alignment (Prediction 5)**:
-
-| Concept | N pairs | Matched (S↔S, D↔D) | Mismatched (S↔D, D↔S) | p |
-|---------|---------|--------------------|-----------------------|------|
-| negation | 15 | +0.622 | +0.218 | <0.0001 |
-| causation | 10 | +0.631 | +0.276 | <0.0001 |
-| certainty | 10 | +0.621 | +0.300 | <0.0001 |
-| temporal_order | 6 | +0.734 | +0.200 | <0.0001 |
-| credibility | 9 | +0.651 | +0.386 | 0.0013 |
-| moral_valence | 6 | +0.648 | +0.242 | 0.0060 |
-
-All 6 concepts significant. Deep↔deep alignment is consistently strongest (mean 0.76); the compositional sub-representation is the most universal feature across architectures.
-
-**Phase transitions at saddle points**: Layer×layer dom_vector cosine similarity matrices show block-diagonal structure in multimodal models, with adjacent-layer cosine dropping to as low as 0.35 at the saddle point — a near-orthogonal rotation between consecutive layers, indicating a discrete transition between sub-representations rather than smooth drift.
-
-**Structural shape features**:
-- CAZ width: median ~50% of model depth. Affective/epistemic wider (~59%) than relational/syntactic (~52%).
-- Asymmetry: rise-to-fall ratio ~10:1. Concepts ramp gradually and cliff-drop after peak.
-- S-C coupling: epistemic concepts show positive S-C correlation (clean linear crystallization); relational/affective show negative (distributed multi-dimensional assembly).
-- Post-CAZ decay: concepts retain ~80% of peak separation; decay is gentle, not catastrophic.
-
-### 6.6 Scored CAZ Detection and Gentle CAZes
-
-The initial multimodal detection used a 10% prominence threshold, which was arbitrary and discarded subtle assembly events. Replacing this with a composite scoring system (CAZ score = prominence × coherence boost × √width, with a 0.5% floor) reveals substantially more structure:
-
-| Detection Threshold | Total CAZes | Multimodal Runs | Avg CAZes/Run |
-|---|---|---|---|
-| 10% (original) | 201 | 45/154 | 1.31 |
-| 5% | 250 | 75/154 | 1.62 |
-| 3% | 317 | 97/154 | 2.06 |
-| 0.5% (scored) | 522 | — | 3.39 |
-
-**Gentle CAZes are causally real.** N-CAZ ablation across 374 CAZ×model combinations shows that 95% of gentle CAZes (score < 0.05) produce >20% separation suppression when ablated — the same rate as black holes (score > 0.5). Half of all causally active features were invisible under the original threshold.
-
-This has implications for safety and steering: subtle features with score 0.02 have real behavioral impact. The MI field's focus on dominant features misses half the causal structure.
-
-### 6.7 N-CAZ Interaction Matrices
-
-Replacing the two-peak (shallow/deep) ablation design with per-CAZ ablation across all detected regions reveals the dependency structure between CAZes within a concept. Across 654 CAZ pairs in 15 models:
-
-**Dependency patterns:**
-- 57% of CAZ pairs are **independent** (ablating one does not affect the other)
-- 43% show **forward dependency** (ablating a shallow CAZ suppresses a deeper one by mean 23.2%)
-
-The independent majority is the notable finding: most CAZes within a concept operate on different geometric directions, consistent with the sub-representation model (Section 3.5). The forward-dependent minority represents cases where a shallow assembly primitive feeds into a deeper computation — a hierarchical structure where dominant CAZes feed downstream gentle CAZes.
-
-### 6.8 Manifold Census — Quantifying Dark Matter
-
-Unsupervised eigenvalue analysis at every layer (Marchenko-Pastur noise floor for significance threshold) reveals how much organized structure exists beyond labeled concepts:
-
-| Model | Hidden Dim | Significant Dims (avg) | 7-Concept Coverage | Dark Matter Dims |
-|---|---|---|---|---|
-| pythia-70m | 512 | 22.5 | 21.0% | 27.8 |
-| pythia-160m | 768 | 16.9 | 45.5% | 24.2 |
-| pythia-1.4b | 2048 | 40.8 | 17.0% | 46.1 |
-| pythia-6.9b | 4096 | 26.3 | 15.2% | 27.3 |
-| gpt2-xl | 1600 | 35.1 | 32.9% | 45.6 |
-
-Seven concept probes explain 13–45% of activation structure. Smaller models have higher coverage (fewer total features); larger models have more absolute dark matter. The remaining organized directions are features the model computes that do not align with any human concept in our probe set.
-
-### 6.9 Platonic Representation Hypothesis — Refined
-
-Three progressively stricter tests of cross-architecture representational convergence:
-
-**Test 1: PCA-compressed (k=20).** Same-concept 0.328, cross-concept transfer 0.349 (ratio 106%). Depth gradient 0.818→0.909. *Verdict: inflated.* Random vectors score 0.996. The top-20 variance directions are concept-agnostic but this subspace is too small to draw conclusions about the full space.
-
-**Test 2: Full-space, per-concept rotation (d=512–4096).** Same-concept 0.978, cross-concept transfer 0.237 (ratio 24%). *Verdict: honest.* 10x above chance in 2048-dim space. Real signal, modest magnitude.
-
-**Test 3: Full-space, all-concept rotation.** Overall alignment 0.742. Depth gradient 0.726→0.763 (delta +0.036). *Verdict: strongest.* When given sufficient training data (all concepts × all layers), Procrustes achieves 74% alignment.
-
-**Reconciliation:** The top ~20–30 PCA dimensions form a shared subspace where concepts align near-perfectly and rotation transfers across concepts. The remaining dimensions contain concept-specific structure. The "true PRH" is 74% alignment when properly estimated, with a modest depth gradient (+0.036 from shallow to deep).
-
-**Cross-lingual convergence:** Qwen 2.5 (Chinese+English training) aligns with English-only models at the same rate as within-English pairs. The shared geometric structure transcends training language.
-
-**Credibility as outlier:** Per-concept rotation from credibility transfers at only 0.10–0.15 to other concepts (vs 0.25–0.45 for others). Credibility occupies a geometrically isolated region — the most consistently shared direction across architectures (cos 0.991 same-concept) but the least transferable rotation to other concepts.
-
-### 6.10 Cross-Concept Primitive Sharing
-
-Cross-concept cosine similarity of shallow-peak dom_vectors reveals shared computational primitives:
-
-| Concept Pair | Mean cos(shallow) | Notable |
-|---|---|---|
-| certainty × credibility | 0.456 | opt-6.7b: **0.926** — near-identical direction |
-| causation × negation | 0.456 | |
-| causation × temporal_order | 0.363 | Relational concepts share primitives |
-| credibility × sentiment | 0.074 | Unrelated |
-| causation × credibility | 0.014 | Orthogonal |
-
-The shallow CAZ for credibility in opt-6.7b is essentially the same feature as the shallow CAZ for certainty — a shared epistemic primitive that both concepts depend on. This changes the unit of analysis from "concept" to "assembly primitive."
-
-### 6.11 Model Coverage and Frontier Validation
-
-The current validation spans 30 models across 7 families: Pythia (70M–6.9B), GPT-2 (124M–1.5B), OPT (125M–6.7B), Qwen 2.5 (0.5B–7B), Gemma 2 (2B), Llama 3.2 (1B–3B), and Mistral (7B), including instruct-tuned variants of Qwen, Gemma, Llama, and Mistral. Phi-2 (2.8B) is also included. All results are obtained on a single NVIDIA L4 GPU (22 GiB).
-
-Frontier-scale validation (Llama 3 70B, Qwen 2.5 72B) is pending compute access. The 30-model results establish multimodal assembly, scored detection, and depth-stratified convergence as robust phenomena across the 70M–7B parameter range and 7 architectural families including models trained on Chinese (Qwen).
+The framework has been validated across 30 models from 7 architectural families (Pythia, GPT-2, OPT, Qwen 2.5, Gemma 2, Llama 3.2, Mistral) spanning 70M to 7B parameters. Full empirical results — including multi-family scale ladders, structural analysis, cross-architecture alignment, and dark matter quantification — are reported in the companion validation paper [Henry, 2026b]. The reference implementation is provided as rosetta\_tools v1.0.0 [Henry, 2026].
 
 ---
 
