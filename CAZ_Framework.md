@@ -49,7 +49,7 @@ DoM extracts a concept direction V_concept ∈ ℝ^d as the normalized differenc
 
 ### 2.3 Abliteration and Intervention Depth
 
-Arditi et al. [2024] demonstrated that refusal behavior across 13 open-source models is mediated by a single direction removable via weight orthogonalization ("abliteration"). Independent replications have observed KL divergences between abliterated and unmodified models ranging from 3.16 to 5.71 — suggesting that while behavioral suppression is effective, the intervention also affects general model capabilities. The CAZ framework motivates a systematic study of intervention depth: rather than selecting a single layer by hyperparameter search, the CAZ profile identifies where concepts are being actively constructed versus where they are established, offering a principled basis for choosing intervention points (Section 4.1, Section 6.6).
+Arditi et al. [2024] demonstrated that refusal behavior across 13 open-source models is mediated by a single direction removable via weight orthogonalization ("abliteration"). Independent replications have observed KL divergences between abliterated and unmodified models ranging from 3.16 to 5.71 — suggesting that while behavioral suppression is effective, the intervention also affects general model capabilities. The CAZ framework motivates a systematic study of intervention depth: rather than selecting a single layer by hyperparameter search, the CAZ profile identifies where concepts are being actively constructed versus where they are established, offering a principled basis for choosing intervention points (Section 4.1).
 
 ### 2.4 The Emerging Geometric Program
 
@@ -61,13 +61,30 @@ Gurnee et al. [2025] demonstrated that character counts are represented on low-d
 
 A CAZ is not a concept. It is a layer-level computational event where the model allocates geometric directions in activation space to serve one or more concepts. The concept is the human label we project onto the geometry; the CAZ is the machinery the model uses to organize that geometry. A single CAZ may host multiple concepts simultaneously (48% do), and a single concept typically participates in multiple CAZes across depth (mean 3.4 per concept per model). The distinction matters: when we say "credibility has a CAZ at layer 10," we mean that layer 10 is where the model allocates a geometric direction that, when measured with a credibility probe, shows strong class separation — not that layer 10 "contains" credibility.
 
+### Terminology
+
+| Term | Definition |
+|---|---|
+| **CAZ** | A location in the layers where the model's geometry expresses influence to serve a concept |
+| **CAZ Profile** | The full sequence of CAZes for one concept in one model |
+| **Black hole** | Dominant CAZ with score > 0.5 — strong, concentrated assembly event |
+| **Gentle CAZ** | Subtle CAZ with score < 0.05 — causally active but invisible to standard detection |
+| **Embedding CAZ** | CAZ at the embedding boundary, driven by token-level features rather than transformer computation |
+| **Active CAZ** | CAZ within the transformer layers, driven by attention and MLP computation. Active CAZes are the primary subject of this framework |
+| **CAZ score** | Composite metric: prominence × coherence boost × √width |
+| **Separation S(l)** | Fisher-normalized centroid distance between contrastive classes at layer l |
+| **Coherence C(l)** | Explained variance ratio of the primary separating direction at layer l |
+| **Velocity v(l)** | Smoothed rate of change of S(l) across layers |
+
 ### 3.1 Concept Lifecycle
 
 By tracking the residual stream across model depth, concept formation is empirically distinguishable as a sequence of allocation events rather than a single assembly followed by decay.
 
 **Early layers (Context and Syntax)**
 
-In early layers, the residual stream primarily resolves local context, grammar, and surface token relationships. Projecting contrastive datasets into this space produces heavily entangled activations; the separation metric is near zero. The model has not yet committed to a semantic trajectory.
+In early layers, the residual stream primarily resolves local context, grammar, and surface token relationships. Projecting contrastive datasets into this space generally produces heavily entangled activations; the separation metric is near zero. The model has not yet committed to a semantic trajectory.
+
+However, the scored detector does find CAZes at layers 0–1 in some models (36 cases across the 30-model validation set). Most are gentle (score < 0.1) and reflect **embedding leakage** — concept-associated tokens having distinctive embeddings that create passive separation before any transformer processing occurs. We term these **embedding CAZes** to distinguish them from **active CAZes** where the model's attention and MLP computations allocate geometry to serve a concept. The embedding CAZ signal is a property of the tokenizer and training corpus, not a computational decision by the model. Practitioners using CAZ profiles should be aware that embedding CAZes may not respond to the same interventions as active CAZes.
 
 **CAZ Chain (Concept Allocation)**
 
@@ -83,13 +100,13 @@ Let h_l^(i) ∈ ℝ^d be the residual stream activation at layer *l* for sample 
 
 **Separation Metric**
 
-We define the separation at layer *l* using a Fisher-normalized criterion:
+We define the separation at layer *l* using a Fisher-normalized criterion [Bishop, 2006, §4.1.4]:
 
 ```
 S(l) = ||h̄_𝒜^(l) - h̄_ℬ^(l)||₂ / √[(1/2)(tr(Σ_𝒜^(l)) + tr(Σ_ℬ^(l)))]
 ```
 
-Raw centroid distance is misleading when cluster dispersion varies across layers. Early layers tend toward diffuse, high-variance representations; normalization by within-class spread corrects for this. Mahalanobis distance would account for full covariance structure but is numerically unstable without regularization in high-dimensional activation spaces. Fisher normalization provides the appropriate tradeoff between geometric fidelity and computational feasibility for initial experiments.
+Raw centroid distance is misleading when cluster dispersion varies across layers. Early layers tend toward diffuse, high-variance representations; normalization by within-class spread corrects for this. Mahalanobis distance [Mahalanobis, 1936] would account for full covariance structure but is numerically unstable without regularization in high-dimensional activation spaces. Fisher normalization provides the appropriate tradeoff between geometric fidelity and computational feasibility for initial experiments.
 
 **Concept Coherence**
 
@@ -140,9 +157,13 @@ A CAZ Profile is characterized by:
 
 #### Scored Detection
 
-The initial multi-region detector used a 10% prominence threshold, which was arbitrary and discarded subtle assembly events. Replacing this with a composite scoring system (CAZ score = prominence × coherence boost × √width, with a 0.5% prominence floor) reveals substantially more structure: 522 CAZes across 22 models versus 201 under the original threshold. Gentle CAZes (score < 0.05) account for half of all detected assembly events and are causally active in 95% of cases (Section 6.6). The scored detector is the primary detection method; the 10% threshold is retained only for backward compatibility.
+The prominence-based detector requires a threshold to determine which peaks are significant. A fixed threshold (e.g., 10% of global max separation) is arbitrary and risks discarding subtle but causally active assembly events. We replace it with a composite scoring system:
 
-Multimodal profiles are common: 75% of concepts show multiple peaks across the model set. The prevalence of multimodality varies by architecture family (Qwen 2.5: 57–86% of concepts multimodal; Gemma 2: distributed structure with zero dominant peaks) rather than by model scale.
+```
+CAZ score = prominence × coherence boost × √width
+```
+
+with a 0.5% prominence floor. This scores each detected region on a continuous scale rather than applying a binary keep/discard decision. The score naturally separates dominant assembly events (black holes, score > 0.5) from subtle ones (gentle CAZes, score < 0.05) while retaining both for analysis. The scored detector is the primary detection method; the fixed-threshold detector is retained for backward compatibility.
 
 ### 3.4 Multi-Layer Concept Extraction
 
@@ -156,9 +177,9 @@ Three extraction methods should be compared empirically:
 
 If methods (1) or (2) consistently outperform (3) on downstream steering and classification tasks, this validates the dynamical framing as more than descriptive vocabulary. If they do not, the framework may still provide useful theoretical structure while failing to improve practical extraction—which is itself worth establishing.
 
-### 3.5 Sub-Representations and Depth-Stratified Convergence
+### 3.5 Sub-Representations
 
-When a concept's S(l) curve is multimodal, the dom_vector (first principal component of contrastive activations) at each peak defines a distinct linear direction. Empirical measurement shows these directions are **geometrically distinct**: across all multimodal concept × model pairs, the cosine similarity between the shallow and deep peak dom_vectors averages 0.2–0.4 (Section 6.5). The two peaks are not the same feature at different amplitudes — they are different linear features that both happen to separate the same contrastive classes.
+When a concept's S(l) curve is multimodal, the dom_vector (first principal component of contrastive activations) at each peak defines a distinct linear direction. Empirical measurement shows these directions are **geometrically distinct**: across all multimodal concept × model pairs, the cosine similarity between the shallow and deep peak dom_vectors averages 0.2–0.4. The two peaks are not the same feature at different amplitudes — they are different linear features that both happen to separate the same contrastive classes.
 
 This implies that a single human concept label ("credibility", "negation") maps to **multiple sub-representations** at different processing depths. Interpretive evidence suggests:
 
@@ -167,9 +188,11 @@ This implies that a single human concept label ("credibility", "negation") maps 
 
 The transition between sub-representations at the saddle point is abrupt, not gradual: layer×layer cosine similarity matrices show block-diagonal structure, and adjacent-layer cosine similarity dips sharply at the saddle point (to as low as 0.35 in some models), indicating a phase transition between distinct encoding regimes.
 
-Cross-architecture alignment confirms that these sub-representations are **independently universal**: depth-matched alignment (shallow↔shallow, deep↔deep) significantly exceeds cross-depth alignment (shallow↔deep, deep↔shallow) across all 6 tested concepts (p < 0.01 for each), with grand means of 0.651 (matched) vs. 0.270 (mismatched). Deep↔deep alignment is consistently the strongest (mean 0.76), suggesting the compositional sub-representation is the most universal feature that models converge on.
+### 3.6 Depth-Stratified Convergence
 
-This finding refines the Platonic Representation Hypothesis [Huh et al., 2024]: representational convergence is not monolithic but **stratified by processing depth**, with each stage of concept assembly converging independently across architectures.
+Cross-architecture alignment confirms that sub-representations are **independently universal**: depth-matched alignment (shallow↔shallow, deep↔deep) significantly exceeds cross-depth alignment (shallow↔deep, deep↔shallow) across all 6 tested concepts (p < 0.01 for each). Deep↔deep alignment is consistently the strongest, suggesting the compositional sub-representation is the most universal feature that models converge on.
+
+This refines the Platonic Representation Hypothesis [Huh et al., 2024]: representational convergence is not monolithic but **stratified by processing depth**, with each stage of concept assembly converging independently across architectures. Full alignment results are reported in the companion validation paper [Henry, 2026b].
 
 ---
 
@@ -183,13 +206,15 @@ The CAZ framework generates seven predictions that are in principle falsifiable 
 
 For a given concept, extract the concept direction at each layer via DoM. Apply orthogonal projection at each layer *l* independently. Measure: (a) behavioral suppression rate on targeted prompts, (b) KL divergence from the unmodified model on unrelated prompts. Plot the ratio (a)/(b) as a function of layer.
 
-The original formulation predicted that mid-CAZ ablation would produce the best ratio — intervening during assembly to allow downstream layers to route around the missing information. Empirical results (Section 6.6) show a more nuanced picture: in models with redundant encoding (Pythia, GPT-2, OPT), the concept direction persists in the residual stream at all layers post-assembly, so suppression is layer-invariant while capability damage is lowest at late layers. The optimal intervention point is therefore *post-CAZ*, not mid-CAZ. In models with sparse encoding (Qwen, Gemma), layer specificity is greater and the CAZ location matters more. The prediction is **revised**: optimal ablation depth depends on the model's encoding strategy, and the CAZ profile identifies which strategy applies.
+The original formulation predicted that mid-CAZ ablation would produce the best ratio — intervening during assembly to allow downstream layers to route around the missing information. Empirical results [Henry, 2026b] show a more nuanced picture: in models with redundant encoding (Pythia, GPT-2, OPT), the concept direction persists in the residual stream at all layers post-assembly, so suppression is layer-invariant while capability damage is lowest at late layers. The optimal intervention point is therefore *post-CAZ*, not mid-CAZ. In models with sparse encoding (Qwen, Gemma), layer specificity is greater and the CAZ location matters more. The prediction is **revised**: optimal ablation depth depends on the model's encoding strategy, and the CAZ profile identifies which strategy applies.
 
 ### 4.2 Architecture-Stable CAZ Positioning
 
 **Prediction 2**: CAZ boundaries are concept-specific but architecture-stable.
 
-Different concepts should have different CAZ windows within the same model. However, the *relative* ordering of those windows — as a fraction of total model depth — should be consistent across architectures. **Status: Confirmed for relative ordering** (Section 6.4). The ordering credibility → negation → causation → temporal\_order → sentiment → certainty → moral\_valence holds across all 7 tested families. Absolute depth percentages are family-specific, but relative concept ordering is universal.
+Different concepts should have different CAZ windows within the same model. However, the *relative* ordering of those windows — as a fraction of total model depth — should be consistent across architectures. Absolute depth percentages may be family-specific, but relative concept ordering should be universal.
+
+**Status: Confirmed for relative ordering** across 7 architectural families [Henry, 2026b].
 
 ### 4.3 CAZ Width and Concept Abstraction
 
@@ -197,11 +222,15 @@ Different concepts should have different CAZ windows within the same model. Howe
 
 More abstract concepts (e.g., "trustworthiness," "moral valence") should have wider CAZ windows than concrete ones (e.g., "negation," "plurality"), because abstract concepts require more iterative construction across attention layers. This is testable by comparing l_end - l_start for concepts at different levels of semantic abstraction as operationalized by, for example, depth in WordNet or scores on standard concreteness rating datasets.
 
+**Status: Initial support.** Affective and epistemic concepts show wider CAZs than relational and syntactic concepts [Henry, 2026b].
+
 ### 4.4 Post-CAZ Degradation as Logit Interference
 
 **Prediction 4**: Post-CAZ re-entanglement correlates with unembedding matrix structure.
 
 The degradation of clean concept geometry in late layers is not noise but a structural consequence of preparing the residual stream for logit projection. Concepts whose associated vocabulary tokens are distributionally similar in the unembedding space—close in embedding distance—should show more post-CAZ degradation than concepts with distributionally distinct vocabulary. This would explain why some concepts retain clean geometry into late layers (their vocabulary is well-separated) while others degrade early (their vocabulary clusters).
+
+**Status: Not yet tested.** Structural analysis shows post-CAZ decay is gentle, but the correlation with unembedding structure has not been directly measured.
 
 ### 4.5 Depth-Stratified Representational Convergence
 
@@ -209,7 +238,7 @@ The degradation of clean concept geometry in late layers is not noise but a stru
 
 When a concept has multiple assembly regions, the sub-representation at a given processing depth should align more strongly with the corresponding-depth sub-representation in other architectures than with a different-depth sub-representation. Specifically, after Procrustes rotation, cosine(shallow_A, shallow_B) > cosine(shallow_A, deep_B) and cosine(deep_A, deep_B) > cosine(deep_A, shallow_B).
 
-**Status**: **Confirmed.** Tested across 6 concepts and 56 model pairs (same-dimension Procrustes and cross-dimension regression). Depth-matched alignment (mean 0.651) significantly exceeds mismatched (mean 0.270) for all 6 concepts (p < 0.01 for each). See Section 6.5.
+**Status**: **Confirmed.** Tested across 6 concepts and 56 model pairs. Depth-matched alignment significantly exceeds mismatched for all 6 concepts (p < 0.01 for each). Full results in the companion validation paper [Henry, 2026b].
 
 ### 4.6 Lexical vs. Compositional Sub-Representations
 
@@ -241,7 +270,7 @@ The CAZ framework operates in the same space as several established interpretabi
 
 **Linear probing** [Belinkov, 2022; Alain & Bengio, 2017] trains classifiers on activations at each layer to measure concept presence. Probing accuracy curves are closely related to the separation metric S(l) — both measure how distinguishable two classes are at a given depth. The CAZ framework adds the velocity metric (rate of change of separation) and the coherence metric (geometric quality of the separating direction), which together identify not just where a concept is present but where it is actively being constructed. Probing also requires training a classifier per layer; the CAZ metrics are computed directly from activation statistics.
 
-**Representation Engineering (RepE)** [Zou et al., 2023] extracts concept directions for honesty, morality, power-seeking, and related concepts via contrastive stimuli, then uses those directions for monitoring and steering. RepE operates at a chosen intervention depth, typically selected by hyperparameter search. The CAZ framework provides a principled basis for that choice: the CAZ peak identifies where the concept is most geometrically legible, while the full CAZ window may contain richer directional information than any single layer. The scored CAZ detector further reveals that a concept may have multiple intervention-worthy layers, not just one.
+**Representation Engineering (RepE)** [Zou et al., 2023] extracts concept directions for honesty, morality, power-seeking, and related concepts via contrastive stimuli, then uses those directions for monitoring and steering. The CAZ framework can directly inform RepE's operational decisions. First, the CAZ profile identifies where a concept is being actively constructed versus where it is established, providing a principled basis for choosing intervention depth. Second, the model's encoding strategy determines whether layer selection matters at all: in models with redundant encoding, the concept direction persists across all post-CAZ layers, so RepE can intervene anywhere with equivalent effect. In models with sparse encoding, the CAZ peak is the critical intervention point and intervening elsewhere may miss the target. Third, the scored CAZ detector reveals that a concept may have multiple intervention-worthy layers — RepE steering applied at a gentle CAZ may produce different behavioral effects than steering at the dominant peak.
 
 ### 5.2 Related Empirical Findings
 
@@ -251,7 +280,7 @@ The CAZ framework operates in the same space as several established interpretabi
 
 **Multi-dimensional concept structure.** Engels et al. [2025] found circular multi-dimensional representations for temporal concepts that are not decomposable into independent one-dimensional SAE features. Wollschläger et al. [2025] showed refusal occupies polyhedral concept cones. These findings establish that rich geometric structure exists; the CAZ framework provides a layer-indexed account of when such structures crystallize.
 
-**The Platonic Representation Hypothesis.** Huh et al. [2024] proposed that models trained on different data and architectures converge on shared representations. The CAZ framework enables a depth-stratified test of this hypothesis: rather than measuring global alignment, we can ask whether convergence differs at shallow versus deep processing stages (Section 6.9).
+**The Platonic Representation Hypothesis.** Huh et al. [2024] proposed that models trained on different data and architectures converge on shared representations. The CAZ framework enables a depth-stratified test of this hypothesis: rather than measuring global alignment, we can ask whether convergence differs at shallow versus deep processing stages.
 
 ---
 
@@ -279,6 +308,10 @@ The framework has been validated across 30 models from 7 architectural families 
 
 Known limitations include:
 
+**Synthetic contrastive data bias**
+
+This is the most significant limitation of the current work. All 7 concept datasets used for validation were generated by a single model (Claude Sonnet 4.5). Every CAZ location, every separation score, and every cross-architecture alignment number in this paper is measured against Claude's definition of each concept. If Claude's concept boundaries differ systematically from a human consensus definition, then what we are mapping is Claude's ontology projected onto other models, not a universal property of the models themselves. Multi-model consensus pair generation is planned to address this. The framework methodology is independent of the data source; only the specific empirical results are at risk.
+
 **Computational cost**
 
 The full CAZ extraction pipeline runs in under 2 minutes per model on a single NVIDIA L4 (22 GiB) for models up to 7B parameters. Frontier-scale models (70B+) will require larger GPUs or 8-bit quantization, which may affect metric precision.
@@ -297,33 +330,36 @@ The framework does not account for which token positions carry concept informati
 
 **Causal validation coverage**
 
-N-CAZ ablation establishes causal impact for 95% of detected CAZes across all score levels (Section 6.7). The remaining 5% of non-causal detections at the gentle level may be noise or measurement artifact. Ablation testing has been performed on 15 of 30 models; full coverage is pending.
-
-**Synthetic contrastive data bias**
-
-The initial 7 concept datasets were generated by a single model (Claude Sonnet 4.5). Multi-model consensus pair generation (14 diverse frontier models across 5 families) has been completed for 10 concepts (~2,400 pairs each), with 3 additional concepts in progress. Until the consensus pairs are validated against the original Claude-generated pairs, quantitative results should be interpreted as "alignment under Claude-defined concept probes." If dom\_vectors shift substantially under consensus data, the known-concept basis used throughout this paper has a systematic bias.
+N-CAZ ablation establishes causal impact for 95% of detected CAZes across all score levels. The remaining 5% of non-causal detections at the gentle level may be noise or measurement artifact. Ablation testing has been performed on 15 of 30 models; full coverage is pending. Details in the companion validation paper [Henry, 2026b].
 
 **PRH measurement sensitivity**
 
-Cross-architecture alignment numbers are highly sensitive to the rotation estimation method. PCA compression to 20 dimensions inflates alignment from 24% (full-space, per-concept) to 87% (PCA, all-concept). The honest range is 24–74% depending on training data quality. All PRH claims in this paper report the measurement method used. See Section 6.9 for full reconciliation.
+Cross-architecture alignment numbers are highly sensitive to the rotation estimation method. PCA compression to low-dimensional subspaces inflates alignment scores. The honest range is 24–74% depending on training data quality. Full reconciliation of measurement methods is reported in the companion validation paper [Henry, 2026b].
 
 ---
 
 ## 8. Conclusion
 
-The Concept Assembly Zone framework has evolved substantially through empirical contact. The original formulation assumed a single contiguous assembly zone per concept. Empirical validation across 30 models, 7 architectural families, and 7 concepts has shown this is a special case. The general picture is richer:
+The Concept Assembly Zone framework provides a methodology for tracking how concepts form across transformer depth — moving from the "best layer" snapshot to a dynamical view of concept allocation.
 
-**CAZes are allocation events, not just assembly events.** 48% of CAZ layers host 2+ concepts peaking simultaneously. Persistent geometric directions rotate through concept space across depth, and the rotation points coincide with CAZ peaks (p = 0.01 for deep switches). Scored detection finds an average of 3.4 CAZes per concept per model, ranging from dominant "black holes" to subtle "gentle CAZes" that were invisible under the original detection threshold. 95% of gentle CAZes are causally active.
+The key contributions are:
 
-**CAZ dependency is sparse.** 57% of CAZ pairs within a concept are independent — ablating one does not affect the other. The remaining 43% show forward dependency (shallow feeds deep). This is consistent with the sub-representation model: most CAZes operate on different geometric directions within the same concept.
+1. **Three layer-wise metrics** (Separation, Coherence, Velocity) that characterize concept formation as a process, not a point.
+2. **Scored detection** that reveals a spectrum of assembly events from dominant to subtle, replacing binary thresholds with continuous scoring.
+3. **The CAZ-is-not-a-concept distinction** — CAZes are layer-level allocation events where the model organizes geometry to serve concepts. Multiple concepts share CAZes; single concepts participate in multiple CAZes across depth.
+4. **Sub-representation tracking** across depth, revealing that human concept labels map to geometrically distinct directions at different processing stages.
 
-**Concepts share computational primitives.** Different human concept labels activate the same shallow features — credibility and certainty share a nearly identical shallow direction (cos 0.926 in opt-6.7b). The unit of analysis should be the assembly primitive, not the human concept label.
+| Prediction | Claim | Status |
+|---|---|---|
+| P1 | Optimal ablation depth relative to CAZ | Revised — depends on encoding strategy |
+| P2 | Architecture-stable CAZ ordering | Confirmed for relative ordering |
+| P3 | CAZ width correlates with abstraction | Initial support |
+| P4 | Post-CAZ degradation correlates with unembedding | Not yet tested |
+| P5 | Cross-architecture alignment is depth-matched | Strongly confirmed |
+| P6 | Shallow peaks are lexical, deep are compositional | Not supported by initial test |
+| P7 | Multi-modality is architectural, not scale-dependent | Supported with nuance |
 
-**Models converge on shared geometry.** A single Procrustes rotation aligns all concepts simultaneously (74% alignment in full space). The shared structure transcends training language (Qwen, trained on Chinese+English, aligns with English-only models). Convergence is stratified by processing depth, with deep sub-representations showing the strongest alignment (mean 0.76).
-
-**Most of what models compute is unnamed.** Seven concept probes explain 13–45% of activation structure. The remaining organized directions — 20–46 significant dimensions per model — are features with no human label. Unsupervised discovery of these features (the Activation Manifold Cartography program) is the natural next step.
-
-Of the seven predictions: P1 is revised (optimal ablation depth depends on encoding strategy, not CAZ location alone); P2 is confirmed for relative ordering; P3 receives initial support; P5 is strongly confirmed; P7 is supported with nuance. P4 and P6 remain untested. The framework has survived extensive empirical stress-testing while requiring revision of two core assumptions — from single-peak to multi-peak assembly, and from concept-specific events to layer-level allocation — revisions that substantially strengthened its explanatory power.
+The framework has survived empirical stress-testing across 30 models while requiring revision of its core assumption from single-peak to multi-peak assembly — a revision that strengthened its explanatory power. Full empirical results are reported in the companion validation paper [Henry, 2026b].
 
 The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026], an open-source Python library providing the full CAZ extraction, alignment, ablation, and feature tracking pipeline described in this paper.
 
@@ -337,6 +373,8 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 - Belinkov, Y. (2022). Probing classifiers: Promises, shortcomings, and advances. *Computational Linguistics*, 48(1), 207–219.
 
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
+
 - Bricken, T., Templeton, A., Batson, J., Chen, B., Jermyn, A., Conerly, T., Turner, N., Anil, C., Denison, C., Askell, A., Lasenby, R., Wu, Y., Kravec, S., Schiefer, N., Maxwell, T., Joseph, N., Hatfield-Dodds, Z., Tamkin, A., Nguyen, K., McLean, B., Burke, J. E., Hume, T., Carter, S., Henighan, T., & Olah, C. (2023). Towards monosemanticity: Decomposing language models with dictionary learning. *Transformer Circuits Thread*, Anthropic. https://transformer-circuits.pub/2023/monosemantic-features/index.html
 
 - Cunningham, H., Ewart, A., Riggs, L., Huben, R., & Sharkey, L. (2023). Sparse autoencoders find highly interpretable features in language models. *arXiv preprint arXiv:2309.08600*. https://arxiv.org/abs/2309.08600
@@ -347,11 +385,15 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 - Engels, J., Michaud, E. J., Liao, I., Gurnee, W., & Tegmark, M. (2025). Not all language model features are one-dimensionally linear. *Proceedings of the International Conference on Learning Representations (ICLR 2025)*. *arXiv preprint arXiv:2405.14860*. https://arxiv.org/abs/2405.14860
 
+- Mahalanobis, P. C. (1936). On the generalized distance in statistics. *Proceedings of the National Institute of Sciences of India*, 2(1), 49–55.
+
 - Henry, J. (2026). rosetta\_tools: Shared tooling for the Rosetta interpretability research program (v1.0.0). https://github.com/jamesrahenry/Rosetta_Tools
 
 - Huh, M., Cheung, B., Wang, T., & Isola, P. (2024). The Platonic Representation Hypothesis. *Proceedings of the International Conference on Machine Learning (ICML 2024)*. *arXiv preprint arXiv:2405.07987*. https://arxiv.org/abs/2405.07987
 
 - Kornblith, S., Norouzi, M., Lee, H., & Hinton, G. (2019). Similarity of neural network representations revisited. *Proceedings of the International Conference on Machine Learning (ICML 2019)*, 3519–3529.
+
+- Fisher, R. A. (1936). The use of multiple measurements in taxonomic problems. *Annals of Eugenics*, 7(2), 179–188.
 
 - Gurnee, W., Ameisen, E., Kauvar, I., Tarng, W., Pearce, A., Olah, C., & Batson, J. (2025). When models manipulate manifolds. *Transformer Circuits Thread*, Anthropic, October 2025. *arXiv preprint arXiv:2601.04480*. https://arxiv.org/abs/2601.04480
 
