@@ -6,7 +6,7 @@
 *Independent Researcher*
 jamesrahenry@henrynet.ca
 
-March 2026 (revised April 5, 2026)
+April 5, 2026
 
 ---
 
@@ -96,14 +96,14 @@ In the final layers, the model transitions from abstract representation to concr
 
 ### 3.2 Layer-Wise Metrics
 
-Let h_l^(i) ∈ ℝ^d be the residual stream activation at layer *l* for sample *i*, and let 𝒜, ℬ be contrastive classes with conditional means h̄_𝒜^(l), h̄_ℬ^(l) and within-class covariance matrices Σ_𝒜^(l), Σ_ℬ^(l).
+Let h_l^(i) ∈ ℝ^d be the residual stream activation at layer *l* for sample *i*, and let A, B be contrastive classes with conditional means h̄_A^(l), h̄_B^(l) and within-class covariance matrices Σ_A^(l), Σ_B^(l).
 
 **Separation Metric**
 
 We define the separation at layer *l* using a Fisher-normalized criterion [Bishop, 2006, §4.1.4]:
 
 ```
-S(l) = ||h̄_𝒜^(l) - h̄_ℬ^(l)||₂ / √[(1/2)(tr(Σ_𝒜^(l)) + tr(Σ_ℬ^(l)))]
+S(l) = ||h̄_A^(l) - h̄_B^(l)||₂ / √[(1/2)(tr(Σ_A^(l)) + tr(Σ_B^(l)))]
 ```
 
 In plain terms: separation asks "if I gave you a sentence and asked whether it expresses credibility or not, how easily could you tell from the model's internal state at this layer?" A high S(l) means the model's activations for credible and non-credible text have moved far apart relative to how spread out each group is. A low S(l) means the two groups are still jumbled together. Tracking S(l) across layers reveals where the model begins to "make up its mind" about a concept.
