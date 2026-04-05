@@ -140,6 +140,8 @@ When the S(l) curve is unimodal, CAZ boundaries are derived from the velocity pr
 
 The conventional best-layer heuristic extracts V_concept at l_max. CAZ-aware extraction uses the full interval [l_start, l_end].
 
+![Figure 1: Single-region detection (left) versus scored CAZ profile (right). The single-region detector identifies one assembly zone for sentiment in Pythia-1.4b. The scored detector reveals six CAZes for credibility in Qwen2.5-0.5B, including embedding, black hole, moderate, and gentle events.](figures/caz_detection_comparison.png)
+
 #### Multi-Region Detection (CAZ Profiles)
 
 Empirical analysis across 30 models reveals that the S(l) curve is frequently **multimodal** — a single concept can produce multiple significant local maxima at different depths. In these cases, the velocity-based boundary detector wraps a single contiguous zone around the global maximum and is blind to secondary peaks.
@@ -297,6 +299,8 @@ Across all 7 concepts in this single model, the framework detects a consistent o
 ### 6.2 Scored Detection Reveals Hidden Structure
 
 Lowering the detection threshold from 10% to 0.5% (scored detection) increases the number of detected CAZes from 7 to 23 in this single model. The additional 16 gentle CAZes are not noise — ablation confirms causal impact for the majority.
+
+![Figure 2: Scored CAZ profile for credibility in Qwen2.5-0.5B. Six CAZes detected: one embedding CAZ (layer 1), one black hole (layer 4), three gentle CAZes (layers 12, 15, 17), and one moderate (layer 19). The full CAZ chain is visible across model depth.](figures/caz_profile_proof_of_concept.png)
 
 ### 6.3 Scope of Validation
 
