@@ -140,7 +140,8 @@ def generate_detection_comparison():
         )
 
     model_name2 = data_multi["model_id"].split("/")[-1]
-    ax.set_title(f"CAZ Profile (Scored Detection)\ncredibility in {model_name2}", fontsize=12)
+    concept_name2 = data_multi.get("concept", "unknown")
+    ax.set_title(f"CAZ Profile (Scored Detection)\n{concept_name2} in {model_name2}", fontsize=12)
     ax.set_xlabel("Depth (%)", fontsize=11)
     ax.set_ylabel("Separation S(l)", fontsize=11)
     ax.set_xlim(0, 100)
@@ -169,7 +170,7 @@ def generate_proof_of_concept():
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
 
-    multi_file = find_extraction("Qwen2.5_0.5B", "credibility")
+    multi_file = find_extraction("opt_2.7b", "causation")
     data, metrics = load_metrics(multi_file)
     profile = find_caz_regions_scored(metrics)
     n_layers = len(metrics)
@@ -204,7 +205,7 @@ def generate_proof_of_concept():
     ax.set_xlabel("Depth (%)", fontsize=13)
     ax.set_ylabel("Separation S(l)", fontsize=13)
     ax.set_title(
-        f"CAZ Profile: credibility in {data['model_id'].split('/')[-1]}\n"
+        f"CAZ Profile: {data.get('concept', 'unknown')} in {data['model_id'].split('/')[-1]}\n"
         f"{len(profile.regions)} CAZes detected — black holes, moderate, gentle, and embedding",
         fontsize=13,
     )

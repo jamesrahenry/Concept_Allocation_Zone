@@ -106,6 +106,8 @@ We define the separation at layer *l* using a Fisher-normalized criterion [Bisho
 S(l) = ||h̄_𝒜^(l) - h̄_ℬ^(l)||₂ / √[(1/2)(tr(Σ_𝒜^(l)) + tr(Σ_ℬ^(l)))]
 ```
 
+In plain terms: separation asks "if I gave you a sentence and asked whether it expresses credibility or not, how easily could you tell from the model's internal state at this layer?" A high S(l) means the model's activations for credible and non-credible text have moved far apart relative to how spread out each group is. A low S(l) means the two groups are still jumbled together. Tracking S(l) across layers reveals where the model begins to "make up its mind" about a concept.
+
 Raw centroid distance is misleading when cluster dispersion varies across layers. Early layers tend toward diffuse, high-variance representations; normalization by within-class spread corrects for this. Mahalanobis distance [Mahalanobis, 1936] would account for full covariance structure but is numerically unstable without regularization in high-dimensional activation spaces. Fisher normalization provides the appropriate tradeoff between geometric fidelity and computational feasibility for initial experiments.
 
 **Concept Coherence**
@@ -118,6 +120,8 @@ C(l) = λ₁^(l) / Σᵢ λᵢ^(l)
 
 where λᵢ^(l) are the eigenvalues of the pooled activation covariance at layer *l*, projected onto the contrastive subspace. A concept is *well-formed* when both S(l) and C(l) are high: the classes are far apart *and* the separating direction is geometrically clean.
 
+In plain terms: coherence asks "is the concept encoded as a single clean direction, or is it smeared across many dimensions?" A high C(l) means the model has committed to one dominant direction for separating the classes — the concept has crystallized into a sharp geometric feature. A low C(l) means the separation exists but is spread across multiple directions, making the concept harder to extract with a single vector. Coherence distinguishes a concept that is clearly formed from one that is still diffuse.
+
 **Concept Velocity**
 
 To identify CAZ boundaries, we compute the rate of geometric divergence between layers. Because raw layer-to-layer differences are noisy, we apply a smoothed estimate:
@@ -127,6 +131,8 @@ v_concept(l) = (1/(2k+1)) Σⱼ₌ₗ₋ₖ^(l+k) [S(j) - S(j-1)]
 ```
 
 where *k* is the smoothing half-window. A practical heuristic is k = ⌊L/24⌋, where L is total model depth, yielding k=1 for 12–24 layer models, k=2 for 48-layer models, and k=3 for 72-layer models. This scales the smoothing window proportionally to model depth and prevents false CAZ boundary detection from single anomalous layers. The appropriate value of k should ultimately be determined empirically — for models where ground-truth concept boundaries can be established via ablation, the k value that maximizes boundary prediction accuracy is preferred.
+
+In plain terms: velocity asks "is the concept forming right now, or has it already formed?" Positive velocity means separation is increasing — the model is actively constructing the concept at this layer. Negative velocity means separation is decreasing — the concept is being degraded or reallocated. Zero velocity means nothing is changing. The velocity curve marks the boundaries of the CAZ: it goes positive when assembly begins and negative when it ends.
 
 ### 3.3 CAZ Boundary Detection
 
