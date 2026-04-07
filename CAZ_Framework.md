@@ -220,9 +220,9 @@ The original formulation predicted that mid-CAZ ablation would produce the best 
 
 **Prediction 2**: CAZ boundaries are concept-specific but architecture-stable.
 
-Different concepts should have different CAZ windows within the same model. However, the *relative* ordering of those windows — as a fraction of total model depth — should be consistent across architectures. Absolute depth percentages may be family-specific, but relative concept ordering should be universal.
+Different concepts should have different CAZ windows within the same model. However, the *relative* ordering of those windows — as a fraction of total model depth — should be consistent across architectures. Absolute depth percentages may be family-specific, but relative concept ordering should be consistent.
 
-**Status: Confirmed for relative ordering** across 8 architectural families [Henry, 2026b].
+**Status: Confirmed as a significant tendency** across 8 architectural families (Kendall's τ permutation test: z = 11.5, p < 0.001; 87% of models positively correlated with the mean ordering, median τ = 0.54). The ordering is statistically robust but not a strict per-model invariant [Henry, 2026b].
 
 ### 4.3 CAZ Width and Concept Abstraction
 
@@ -238,7 +238,7 @@ More abstract concepts (e.g., "trustworthiness," "moral valence") should have wi
 
 The degradation of clean concept geometry in late layers is not noise but a structural consequence of preparing the residual stream for logit projection. Concepts whose associated vocabulary tokens are distributionally similar in the unembedding space—close in embedding distance—should show more post-CAZ degradation than concepts with distributionally distinct vocabulary. This would explain why some concepts retain clean geometry into late layers (their vocabulary is well-separated) while others degrade early (their vocabulary clusters).
 
-**Status: Not yet tested.** Structural analysis shows post-CAZ decay is gentle, but the correlation with unembedding structure has not been directly measured.
+**Status: Revised, partially supported.** Multimodal assembly (mean 3.4 CAZes per concept per model) invalidates the single-peak assumption — apparent "decay" between peaks is inter-CAZ reallocation, not degradation. Redefining as post-*chain* degradation (final CAZ peak to last layer): remaining depth predicts decay ($r = -0.312$, $p < 0.001$, 182 measurements, 26 models). Unembedding token clustering shows a weak but significant effect ($r = 0.173$, $p = 0.019$). Mean decay ratio is 0.725 — concepts retain ~73% of peak separation through to the final layer. Proximity to the output layer is the dominant factor; unembedding structure contributes modestly [Henry, 2026b].
 
 ### 4.5 Depth-Stratified Representational Convergence
 
