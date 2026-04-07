@@ -12,7 +12,7 @@ April 5, 2026
 
 ## Abstract
 
-Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): a layer-level event where the model allocates geometric directions in activation space to serve one or more concepts. We formalize the CAZ through three layer-wise metrics — Separation, Concept Coherence, and Concept Velocity — and derive principled methods for identifying CAZ boundaries without manual layer sweeps. A CAZ is not a concept: it is the computational event where the model organizes its geometry to make a concept measurably separable. Multiple concepts may share a CAZ, and a single concept typically participates in multiple CAZes across depth. Empirical validation across 30 models from 7 architectural families and 7 concepts reveals that the separation curve S(l) is frequently **multimodal**, with a scored detection method uncovering an additional category of subtle assembly events ("gentle CAZes") that are invisible to standard peak detection but are causally active in 95% of cases. The framework generates seven testable predictions, of which five have been empirically evaluated, and provides a reference implementation in the open-source rosetta\_tools library (v1.0.0).
+Mechanistic interpretability methods commonly extract concept representations by identifying the single optimal layer of a Transformer's residual stream where class separation peaks. This "best layer" heuristic is computationally efficient and empirically grounded, but it captures a snapshot of a process rather than the process itself. We introduce the **Concept Assembly Zone** (CAZ): a layer-level event where the model allocates geometric directions in activation space to serve one or more concepts. We formalize the CAZ through three layer-wise metrics — Separation, Concept Coherence, and Concept Velocity — and derive principled methods for identifying CAZ boundaries without manual layer sweeps. A CAZ is not a concept: it is the computational event where the model organizes its geometry to make a concept measurably separable. Multiple concepts may share a CAZ, and a single concept typically participates in multiple CAZes across depth. Empirical validation across 34 models from 8 architectural families and 7 concepts reveals that the separation curve S(l) is frequently **multimodal**, with a scored detection method uncovering an additional category of subtle assembly events ("gentle CAZes") that are invisible to standard peak detection but are causally active in 95% of cases. The framework generates seven testable predictions, of which five have been empirically evaluated, and provides a reference implementation in the open-source rosetta\_tools library (v1.0.0).
 
 ---
 
@@ -33,7 +33,7 @@ The framework has immediate practical implications:
 5. **Understanding alignment training.** CAZ profiles provide a lens for studying what preference optimization changes in a model — not whether concepts exist, but where and how they are assembled.
 6. **Concept inventory.** By tracking which geometric directions are allocated at each CAZ and which remain unaligned with any human concept probe, the framework provides a systematic approach to cataloguing what a model computes — both the named and the unnamed.
 
-The CAZ framework generates specific, falsifiable predictions. Section 4 states seven such predictions; Section 6 reports empirical results for five of them across 30 models and 7 architectural families. The reference implementation is provided as rosetta\_tools [Henry, 2026], an open-source Python library. We are explicit about the assumptions the framework inherits from the broader interpretability literature.
+The CAZ framework generates specific, falsifiable predictions. Section 4 states seven such predictions; Section 6 reports empirical results for five of them across 34 models and 8 architectural families. The reference implementation is provided as rosetta\_tools [Henry, 2026], an open-source Python library. We are explicit about the assumptions the framework inherits from the broader interpretability literature.
 
 ---
 
@@ -150,7 +150,7 @@ The conventional best-layer heuristic extracts V_concept at l_max. CAZ-aware ext
 
 #### Multi-Region Detection (CAZ Profiles)
 
-Empirical analysis across 30 models reveals that the S(l) curve is frequently **multimodal** — a single concept can produce multiple significant local maxima at different depths. In these cases, the velocity-based boundary detector wraps a single contiguous zone around the global maximum and is blind to secondary peaks.
+Empirical analysis across 34 models reveals that the S(l) curve is frequently **multimodal** — a single concept can produce multiple significant local maxima at different depths. In these cases, the velocity-based boundary detector wraps a single contiguous zone around the global maximum and is blind to secondary peaks.
 
 The **CAZ Profile** generalizes the single-region CAZ to a sequence of assembly regions:
 
@@ -222,7 +222,7 @@ The original formulation predicted that mid-CAZ ablation would produce the best 
 
 Different concepts should have different CAZ windows within the same model. However, the *relative* ordering of those windows — as a fraction of total model depth — should be consistent across architectures. Absolute depth percentages may be family-specific, but relative concept ordering should be universal.
 
-**Status: Confirmed for relative ordering** across 7 architectural families [Henry, 2026b].
+**Status: Confirmed for relative ordering** across 8 architectural families [Henry, 2026b].
 
 ### 4.3 CAZ Width and Concept Abstraction
 
@@ -310,7 +310,7 @@ Lowering the detection threshold from 10% to 0.5% (scored detection) increases t
 
 ### 6.3 Scope of Validation
 
-The framework has been validated across 30 models from 7 architectural families (Pythia, GPT-2, OPT, Qwen 2.5, Gemma 2, Llama 3.2, Mistral) spanning 70M to 7B parameters. Full empirical results — including multi-family scale ladders, structural analysis, cross-architecture alignment, and dark matter quantification — are reported in the companion validation paper [Henry, 2026b]. The reference implementation is provided as rosetta\_tools v1.0.0 [Henry, 2026].
+The framework has been validated across 34 models from 8 architectural families (Pythia, GPT-2, OPT, Qwen 2.5, Gemma 2, Llama 3.2, Mistral, Phi) spanning 70M to 7B parameters. Full empirical results — including multi-family scale ladders, structural analysis, cross-architecture alignment, and dark matter quantification — are reported in the companion validation paper [Henry, 2026b]. The reference implementation is provided as rosetta\_tools v1.0.0 [Henry, 2026].
 
 ---
 
@@ -328,7 +328,7 @@ The full CAZ extraction pipeline runs in under 2 minutes per model on a single N
 
 **Smoothing sensitivity**
 
-CAZ boundary detection depends on the smoothing parameter *k* and threshold θ₊. The current heuristic (k = ⌊L/24⌋) produces consistent results across 30 models but has not been formally validated against ground-truth concept boundaries.
+CAZ boundary detection depends on the smoothing parameter *k* and threshold θ₊. The current heuristic (k = ⌊L/24⌋) produces consistent results across 34 models but has not been formally validated against ground-truth concept boundaries.
 
 **Linearity assumption**
 
@@ -340,7 +340,7 @@ The framework does not account for which token positions carry concept informati
 
 **Causal validation coverage**
 
-N-CAZ ablation establishes causal impact for 95% of detected CAZes across all score levels. The remaining 5% of non-causal detections at the gentle level may be noise or measurement artifact. Ablation testing has been performed on 15 of 30 models; full coverage is pending. Details in the companion validation paper [Henry, 2026b].
+N-CAZ ablation establishes causal impact for 95% of detected CAZes across all score levels. The remaining 5% of non-causal detections at the gentle level may be noise or measurement artifact. Ablation testing has been performed on 15 of 34 models; full coverage is pending. Details in the companion validation paper [Henry, 2026b].
 
 **PRH measurement sensitivity**
 
@@ -369,7 +369,7 @@ The key contributions are:
 | P6 | Shallow peaks are lexical, deep are compositional | Not supported by initial test |
 | P7 | Multi-modality is architectural, not scale-dependent | Supported with nuance |
 
-The framework has survived empirical stress-testing across 30 models while requiring revision of its core assumption from single-peak to multi-peak assembly — a revision that strengthened its explanatory power. Full empirical results are reported in the companion validation paper [Henry, 2026b].
+The framework has survived empirical stress-testing across 34 models while requiring revision of its core assumption from single-peak to multi-peak assembly — a revision that strengthened its explanatory power. Full empirical results are reported in the companion validation paper [Henry, 2026b].
 
 The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026], an open-source Python library providing the full CAZ extraction, alignment, ablation, and feature tracking pipeline described in this paper.
 
