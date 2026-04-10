@@ -3,8 +3,7 @@
 **Tracking How Concepts Form Across Transformer Depth**
 
 **James Henry**
-*Independent Researcher*
-jamesrahenry@henrynet.ca
+*Independent Researcher* · jamesrahenry@henrynet.ca · [ORCID 0009-0005-7126-9466](https://orcid.org/0009-0005-7126-9466)
 
 April 5, 2026
 
