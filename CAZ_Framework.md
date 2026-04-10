@@ -363,7 +363,7 @@ The key contributions are:
 | P1 | Optimal ablation depth relative to CAZ | Revised — depends on encoding strategy |
 | P2 | Architecture-stable CAZ ordering | Confirmed for relative ordering |
 | P3 | CAZ width correlates with abstraction | Initial support |
-| P4 | Post-CAZ degradation correlates with unembedding | Not yet tested |
+| P4 | Post-CAZ degradation correlates with unembedding | Revised, partially supported |
 | P5 | Cross-architecture alignment is depth-matched | Strongly confirmed |
 | P6 | Shallow peaks are lexical, deep are compositional | Not supported by initial test |
 | P7 | Multi-modality is architectural, not scale-dependent | Supported with nuance |
