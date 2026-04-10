@@ -4,6 +4,8 @@
 
 *James Henry — March 2026 (revised April 2026)*
 
+> **Note:** This repository was previously named *Concept Assembly Zone*. The rename reflects a terminology clarification: CAZes are layer-level **allocation events** — the model allocates geometric directions to serve concepts — not a sequential assembly process. The CAZ acronym is unchanged. The old repo ([Concept_Assembly_Zone](https://github.com/jamesrahenry/Concept_Assembly_Zone)) redirects here.
+
 ---
 
 When does a transformer "know" something?
