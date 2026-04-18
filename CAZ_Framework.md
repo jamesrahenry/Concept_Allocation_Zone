@@ -5,7 +5,7 @@
 **James Henry**
 *Independent Researcher* · jamesrahenry@henrynet.ca · [ORCID 0009-0005-7126-9466](https://orcid.org/0009-0005-7126-9466)
 
-April 5, 2026
+April 5, 2026 (revised April 18, 2026)
 
 ---
 
@@ -145,7 +145,7 @@ When the S(l) curve is unimodal, CAZ boundaries are derived from the velocity pr
 
 The conventional best-layer heuristic extracts V_concept at l_max. CAZ-aware extraction uses the full interval [l_start, l_end].
 
-![Figure 1: Single-region detection (left) versus scored CAZ profile (right). The single-region detector identifies one allocation zone for sentiment in Pythia-1.4b. The scored detector reveals six CAZes for credibility in Qwen2.5-0.5B, including embedding, black hole, moderate, and gentle events.](figures/caz_detection_comparison.png)
+![Figure 1: Single-region detection (left) versus scored CAZ profile (right). The single-region detector identifies one allocation zone for sentiment in Pythia-1.4b. The scored detector reveals six CAZes for credibility in Qwen2.5-0.5B, spanning embedding, black hole, strong, and gentle score categories.](figures/caz_detection_comparison.png)
 
 #### Multi-Region Detection (CAZ Profiles)
 
@@ -305,7 +305,7 @@ Across all 7 concepts in this single model, the framework detects a consistent o
 
 Lowering the detection threshold from 10% to 0.5% (scored detection) increases the number of detected CAZes from 7 to 23 in this single model. The additional 16 gentle CAZes are not noise — ablation confirms causal impact for the majority.
 
-![Figure 2: Scored CAZ profile for credibility in Qwen2.5-0.5B. Six CAZes detected: one embedding CAZ (layer 1), one black hole (layer 4), three gentle CAZes (layers 12, 15, 17), and one moderate (layer 19). The full CAZ chain is visible across model depth.](figures/caz_profile_proof_of_concept.png)
+![Figure 2: Scored CAZ profile for credibility in Qwen2.5-0.5B. Six CAZes detected: one embedding CAZ (layer 1, score 0.06), one black hole (layer 4, score 0.71), three gentle CAZes (layers 12, 15, 17; scores 0.01–0.01), and one strong (layer 19, score 0.38). The full CAZ chain is visible across model depth.](figures/caz_profile_proof_of_concept.png)
 
 ### 6.3 Scope of Validation
 
