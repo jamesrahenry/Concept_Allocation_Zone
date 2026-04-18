@@ -271,6 +271,8 @@ The CAZ framework operates in the same space as several established interpretabi
 
 ### 5.1 Methodological Context
 
+**Logit Lens and Tuned Lens.** The most direct methodological antecedents of the CAZ framework are the logit lens [nostalgebraist, 2020] and the tuned lens [Belrose et al., 2023]. Both project intermediate residual-stream activations into a fixed interpretive space — the unembedding matrix for logit lens, a per-layer trained affine probe for tuned lens — to produce a layer-by-layer trajectory of the model's evolving prediction. CAZ shares the core commitment to tracking representations across depth rather than characterizing a single best layer, and any claim about layer-indexed concept dynamics necessarily inherits from this line of work. The distinction is what is being projected and asked. Logit and tuned lens project onto output-vocabulary space and ask *what token would this layer predict if the model stopped here?*; the CAZ framework projects onto concept-contrast directions obtained from external stimulus pairs and asks *where in the stack is this concept being allocated?* Concepts without a canonical lexicalization — credibility, refusal, moral valence — do not project cleanly onto vocabulary axes and fall outside the natural scope of logit-lens interpretation, which motivates the contrast-direction formulation used here. Tuned Lens could serve as a baseline against which the velocity metric is calibrated in settings where concept and vocabulary are tightly coupled.
+
 **Sparse Autoencoders (SAEs)** decompose activations at a fixed layer into interpretable monosemantic features [Cunningham et al., 2023; Bricken et al., 2023]. SAEs answer "what features exist at layer L?" The CAZ framework answers "how does the feature at layer L relate to the feature at layers L−1 and L+1?" The approaches are complementary: SAE features at a given layer are a snapshot; CAZ tracking reveals which snapshots are part of the same evolving computation. Engels et al. [2024] found that SAE "dark matter" — structured residual that resists linear decomposition — accounts for roughly 50% of the error vector. The CAZ framework offers a candidate mechanism: in-progress concept construction within a CAZ produces transitional representations that are neither the input feature nor the output feature. These transitional states may be precisely what resists decomposition at any single layer.
 
 **Centered Kernel Alignment (CKA)** [Kornblith et al., 2019] measures representational similarity between layers or models by comparing activation kernel matrices. CKA provides a global similarity score between two representation spaces but does not identify *which* features are shared or how they evolve across depth. The CAZ framework tracks individual concept directions layer by layer, producing a trajectory rather than a scalar comparison. CKA could serve as a complementary validation tool — high CKA between two layers would be expected within a CAZ (the representation is being refined, not replaced) and low CKA at a saddle point between CAZs (the representation is being reallocated).
@@ -279,13 +281,20 @@ The CAZ framework operates in the same space as several established interpretabi
 
 **Representation Engineering (RepE)** [Zou et al., 2023] extracts concept directions for honesty, morality, power-seeking, and related concepts via contrastive stimuli, then uses those directions for monitoring and steering. The CAZ framework can directly inform RepE's operational decisions. First, the CAZ profile identifies where a concept is being actively constructed versus where it is established, providing a principled basis for choosing intervention depth. Second, the model's encoding strategy determines whether layer selection matters at all: in models with redundant encoding, the concept direction persists across all post-CAZ layers, so RepE can intervene anywhere with equivalent effect. In models with sparse encoding, the CAZ peak is the critical intervention point and intervening elsewhere may miss the target. Third, the scored CAZ detector reveals that a concept may have multiple intervention-worthy layers — RepE steering applied at a gentle CAZ may produce different behavioral effects than steering at the dominant peak.
 
+**Activation patching and causal scrubbing.** Activation patching — replacing activations at a specified layer and component with those from a counterfactual run [Vig et al., 2020; Meng et al., 2022; Wang et al., 2023] — is the canonical toolkit for testing whether a proposed locus genuinely carries a computation. Causal scrubbing [Chan et al., 2022] formalizes this as a discipline for rigorously testing mechanistic hypotheses; path patching [Goldowsky-Dill et al., 2023] extends the method to circuit-level attribution. Any claim of the form "the concept is allocated at layer l" is a candidate for validation under this family of methods, and the ablation protocol used in the companion paper [Henry, 2026b] is a direct descendant. The CAZ contribution is upstream of patching rather than parallel to it: the velocity-based boundary and score-based region detectors produce a principled, concept-specific choice of *which* layers to patch, replacing exhaustive layer sweeps with a targeted hypothesis about the allocation zone. The two methods are therefore complementary — CAZ identifies candidate layers; activation patching tests whether the identified layers are causally necessary.
+
 ### 5.2 Related Empirical Findings
+
+**MLP feed-forward layers as key-value memories.** Geva et al. [2021] demonstrated that transformer feed-forward layers function as key-value memories in which keys capture input patterns and values promote output distributions, and Geva et al. [2022] showed that these layer-specific write operations incrementally promote concepts into the vocabulary space across depth. This provides a plausible mechanistic substrate for the CAZ notion of allocation: the layer at which a concept's separation accelerates corresponds, under the Geva et al. account, to the layers whose FFN memories most strongly write that concept's direction into the residual stream. We note this connection without claiming the CAZ framework depends on the key-value interpretation — the metrics S(l), v(l), and C(l) are defined on the residual stream and are agnostic to whether the promotion happens through attention or feed-forward paths — but the mechanistic picture provided by Geva et al. is the most natural candidate for "what is physically happening during a CAZ."
+
 
 **Manifold interpretability.** Gurnee et al. [2025] found curved manifolds in middle layers for character counting and explicitly called for unsupervised geometric discovery methods. The CAZ framework provides a formalism for identifying *where* in the layer stack such manifolds crystallize — the allocation zone is precisely where curved manifold structure should be most geometrically coherent.
 
 **The geometry of refusal.** Arditi et al. [2024] and Wollschläger et al. [2025] establish the geometric structure of refusal — a single removable direction (abliteration) and multi-dimensional concept cones, respectively. The CAZ framework extends this by asking not just *what* the geometry is but *when* it forms, and using that temporal structure to identify optimal intervention points.
 
 **Multi-dimensional concept structure.** Engels et al. [2025] found circular multi-dimensional representations for temporal concepts that are not decomposable into independent one-dimensional SAE features. Wollschläger et al. [2025] showed refusal occupies polyhedral concept cones. These findings establish that rich geometric structure exists; the CAZ framework provides a layer-indexed account of when such structures crystallize.
+
+**Universal neurons.** Gurnee et al. [2024] identified individual neurons in GPT-2 that activate on consistent input features across five independent training runs — direct evidence that specific representational structure is stable under retraining. This is a neuron-level instantiation of the architectural-convergence phenomenon the Platonic Representation Hypothesis addresses at the level of whole representation spaces. The CAZ framework predicts a depth-stratified extension of both claims: if concepts allocate at architecturally-stable proportional depths, then the layers hosting universal neurons for a given concept should correspond to that concept's CAZ peak in proportional terms, and cross-architecture alignment of concept directions should be strongest when evaluated at matched CAZ depths rather than at matched absolute layer indices. Universal-neuron discovery and CAZ-profile matching are therefore two lenses on the same underlying regularity at different granularities.
 
 **The Platonic Representation Hypothesis.** Huh et al. [2024] proposed that models trained on different data and architectures converge on shared representations. The CAZ framework enables a depth-stratified test of this hypothesis: rather than measuring global alignment, we can ask whether convergence differs at shallow versus deep processing stages.
 
@@ -305,7 +314,7 @@ Across all 7 concepts in this single model, the framework detects a consistent o
 
 Lowering the detection threshold from 10% to 0.5% (scored detection) increases the number of detected CAZes from 7 to 23 in this single model. The additional 16 gentle CAZes are not noise — ablation confirms causal impact for the majority.
 
-![Figure 2: Scored CAZ profile for credibility in Qwen2.5-0.5B. Six CAZes detected: one embedding CAZ (layer 1, score 0.06), one black hole (layer 4, score 0.71), three gentle CAZes (layers 12, 15, 17; scores 0.01–0.01), and one strong (layer 19, score 0.38). The full CAZ chain is visible across model depth.](figures/caz_profile_proof_of_concept.png)
+![Figure 2: Scored CAZ profile for negation in OPT-2.7B (32 layers). Six CAZes detected across depth: one embedding CAZ (layer 1, score 0.14), three gentle CAZes (layers 7, 13, 15; scores ≤0.01), one dominant strong CAZ at mid-depth (layer 20, score 0.47), and one gentle tail CAZ (layer 22, score 0.01). Demonstrating cross-architecture generalization of the scored detector: the embedding → shallow chain → dominant allocation → tail structure is visible in an OPT-family model, distinct from the Qwen example of Figure 1.](figures/caz_profile_proof_of_concept.png)
 
 ### 6.3 Scope of Validation
 
@@ -374,6 +383,12 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 ---
 
+## Acknowledgments
+
+The author thanks external reviewers for bringing several lines of prior work to attention during pre-submission review — in particular the logit/tuned lens line [nostalgebraist, 2020; Belrose et al., 2023], the feed-forward key-value memory account of Geva et al. [2021, 2022], the activation-patching and causal-scrubbing validation toolkit [Vig et al., 2020; Meng et al., 2022; Wang et al., 2023; Chan et al., 2022; Goldowsky-Dill et al., 2023], and the universal neurons result of Gurnee et al. [2024]. §5 has been expanded to situate the CAZ framework explicitly with respect to these works. The author takes full responsibility for any remaining omissions in the coverage of prior art; the interpretability literature is large and fast-moving, and further connections to this framework are to be expected.
+
+---
+
 ## References
 
 - Arditi, A., Obeso, O., Syed, A., Paleka, D., Panickssery, N., Gurnee, W., & Nanda, N. (2024). Refusal in language models is mediated by a single direction. *arXiv preprint arXiv:2406.11717*. https://arxiv.org/abs/2406.11717
@@ -382,9 +397,13 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 - Belinkov, Y. (2022). Probing classifiers: Promises, shortcomings, and advances. *Computational Linguistics*, 48(1), 207–219.
 
+- Belrose, N., Furman, Z., Smith, L., Halawi, D., Ostrovsky, I., McKinney, L., Biderman, S., & Steinhardt, J. (2023). Eliciting latent predictions from transformers with the tuned lens. *arXiv preprint arXiv:2303.08112*. https://arxiv.org/abs/2303.08112
+
 - Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer.
 
 - Bricken, T., Templeton, A., Batson, J., Chen, B., Jermyn, A., Conerly, T., Turner, N., Anil, C., Denison, C., Askell, A., Lasenby, R., Wu, Y., Kravec, S., Schiefer, N., Maxwell, T., Joseph, N., Hatfield-Dodds, Z., Tamkin, A., Nguyen, K., McLean, B., Burke, J. E., Hume, T., Carter, S., Henighan, T., & Olah, C. (2023). Towards monosemanticity: Decomposing language models with dictionary learning. *Transformer Circuits Thread*, Anthropic. https://transformer-circuits.pub/2023/monosemantic-features/index.html
+
+- Chan, L., Garriga-Alonso, A., Goldowsky-Dill, N., Greenblatt, R., Nitishinskaya, J., Radhakrishnan, A., Shlegeris, B., & Thomas, N. (2022). Causal scrubbing: A method for rigorously testing interpretability hypotheses. *AI Alignment Forum*, December 2022. https://www.alignmentforum.org/posts/JvZhhzycHu2Yd57RN/causal-scrubbing-a-method-for-rigorously-testing
 
 - Cunningham, H., Ewart, A., Riggs, L., Huben, R., & Sharkey, L. (2023). Sparse autoencoders find highly interpretable features in language models. *arXiv preprint arXiv:2309.08600*. https://arxiv.org/abs/2309.08600
 
@@ -396,6 +415,10 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 - Mahalanobis, P. C. (1936). On the generalized distance in statistics. *Proceedings of the National Institute of Sciences of India*, 2(1), 49–55.
 
+- Meng, K., Bau, D., Andonian, A., & Belinkov, Y. (2022). Locating and editing factual associations in GPT. *Advances in Neural Information Processing Systems (NeurIPS 2022)*, 35, 17359–17372. *arXiv preprint arXiv:2202.05262*. https://arxiv.org/abs/2202.05262
+
+- nostalgebraist. (2020). Interpreting GPT: The logit lens. *LessWrong / AI Alignment Forum*, August 2020. https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens
+
 - Henry, J. (2026). rosetta\_tools: Shared tooling for the Rosetta interpretability research program (v1.0.0). https://github.com/jamesrahenry/Rosetta_Tools
 
 - Huh, M., Cheung, B., Wang, T., & Isola, P. (2024). The Platonic Representation Hypothesis. *Proceedings of the International Conference on Machine Learning (ICML 2024)*. *arXiv preprint arXiv:2405.07987*. https://arxiv.org/abs/2405.07987
@@ -404,7 +427,19 @@ The reference implementation is available as rosetta\_tools v1.0.0 [Henry, 2026]
 
 - Fisher, R. A. (1936). The use of multiple measurements in taxonomic problems. *Annals of Eugenics*, 7(2), 179–188.
 
+- Geva, M., Schuster, R., Berant, J., & Levy, O. (2021). Transformer feed-forward layers are key-value memories. *Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP 2021)*, 5484–5495. *arXiv preprint arXiv:2012.14913*. https://arxiv.org/abs/2012.14913
+
+- Geva, M., Caciularu, A., Wang, K. R., & Goldberg, Y. (2022). Transformer feed-forward layers build predictions by promoting concepts in the vocabulary space. *Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing (EMNLP 2022)*, 30–45. *arXiv preprint arXiv:2203.14680*. https://arxiv.org/abs/2203.14680
+
+- Goldowsky-Dill, N., MacLeod, C., Sato, L., & Arora, A. (2023). Localizing model behavior with path patching. *arXiv preprint arXiv:2304.05969*. https://arxiv.org/abs/2304.05969
+
+- Gurnee, W., Horsley, T., Guo, Z. C., Kheirkhah, T. R., Sun, Q., Hathaway, W., Nanda, N., & Bertsimas, D. (2024). Universal neurons in GPT2 language models. *Transactions on Machine Learning Research (TMLR)*. *arXiv preprint arXiv:2401.12181*. https://arxiv.org/abs/2401.12181
+
 - Gurnee, W., Ameisen, E., Kauvar, I., Tarng, W., Pearce, A., Olah, C., & Batson, J. (2025). When models manipulate manifolds. *Transformer Circuits Thread*, Anthropic, October 2025. *arXiv preprint arXiv:2601.04480*. https://arxiv.org/abs/2601.04480
+
+- Vig, J., Gehrmann, S., Belinkov, Y., Qian, S., Nevo, D., Singer, Y., & Shieber, S. (2020). Investigating gender bias in language models using causal mediation analysis. *Advances in Neural Information Processing Systems (NeurIPS 2020)*, 33, 12388–12401.
+
+- Wang, K., Variengien, A., Conmy, A., Shlegeris, B., & Steinhardt, J. (2023). Interpretability in the wild: A circuit for indirect object identification in GPT-2 small. *Proceedings of the International Conference on Learning Representations (ICLR 2023)*. *arXiv preprint arXiv:2211.00593*. https://arxiv.org/abs/2211.00593
 
 - Wollschläger, T., Elstner, J., Geisler, S., Cohen-Addad, V., Günnemann, S., & Gasteiger, J. (2025). The geometry of refusal in large language models: Concept cones and representational independence. *Proceedings of Machine Learning Research (ICML 2025)*, 267, 66945–66970. *arXiv preprint arXiv:2502.17420*. https://arxiv.org/abs/2502.17420
 

@@ -215,20 +215,23 @@ def generate_detection_comparison():
     plt.close(fig)
 
 
-# ─── Figure 2: Proof-of-concept — Qwen credibility enlarged ────────────────────
+# ─── Figure 2: Proof-of-concept — OPT-2.7b negation enlarged ──────────────────
+#   Chosen to show cross-architecture generalization of the scored detector:
+#   different family (OPT vs Qwen), different concept (negation vs credibility),
+#   rich 6-region profile with embedding → shallow chain → strong peak → tail.
 
 def generate_proof_of_concept():
-    multi_file = find_extraction("Qwen2.5_0.5B", "credibility")
+    multi_file = find_extraction("opt_2.7b", "negation")
     data, metrics = load_metrics(multi_file)
     profile = find_caz_regions_scored(metrics)
+    concept = data.get("concept", "negation")
 
     fig, ax = plt.subplots(1, 1, figsize=(12, 5.2))
-    seps, _, n = draw_profile(ax, metrics, "credibility")
+    seps, _, n = draw_profile(ax, metrics, concept)
 
     callouts = []
     for region in profile.regions:
         key, edge, label = mark_region(ax, region, seps, marker_size=130)
-        # Callouts only for the embedding and black hole, to avoid clutter.
         if key == "embedding":
             callouts.append({
                 "x": region.peak, "y": seps[region.peak],
@@ -244,7 +247,7 @@ def generate_proof_of_concept():
         elif key == "strong":
             callouts.append({
                 "x": region.peak, "y": seps[region.peak],
-                "label": f"Strong\n(layer {region.peak}, {region.caz_score:.2f})",
+                "label": f"Strong CAZ\n(layer {region.peak}, {region.caz_score:.2f})",
                 "color": edge,
             })
 
@@ -252,7 +255,7 @@ def generate_proof_of_concept():
         add_outside_callouts(ax, callouts, n_layers=n)
 
     ax.set_title(
-        f"Scored CAZ Profile — credibility in Qwen2.5-0.5B "
+        f"Scored CAZ Profile — {concept} in OPT-2.7B "
         f"({len(profile.regions)} CAZes detected)",
         fontsize=11, loc="left", pad=8,
     )
@@ -260,7 +263,7 @@ def generate_proof_of_concept():
     ax.set_xlabel("Layer (depth %)", fontsize=10)
 
     legend_elems = [
-        Line2D([0], [0], color=concept_color("credibility"), linewidth=SEP_LW,
+        Line2D([0], [0], color=concept_color(concept), linewidth=SEP_LW,
                label="Separation $S(\\ell)$"),
         Patch(facecolor=EMBED_FILL, edgecolor=EMBED_COLOR, linewidth=1.0,
               label="Embedding"),
