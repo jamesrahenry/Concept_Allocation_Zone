@@ -189,9 +189,9 @@ The transition between sub-representations at the saddle point is abrupt, not gr
 
 ### 3.6 Depth-Stratified Convergence
 
-Cross-architecture alignment confirms that sub-representations are **independently universal**: depth-matched alignment (shallow $\leftrightarrow$ shallow, deep $\leftrightarrow$ deep) significantly exceeds cross-depth alignment (shallow $\leftrightarrow$ deep, deep $\leftrightarrow$ shallow) across all 6 tested concepts ($p < 0.01$ for each). Deep $\leftrightarrow$ deep alignment is consistently the strongest, suggesting the compositional sub-representation is the most universal feature that models converge on.
+Cross-architecture alignment confirms that concept directions are **genuinely universal**: grand mean aligned cosine 0.9807 across architectures and concepts, with a permutation-label null of 0.003–0.006 per concept (z = 22–37, all $p < 10^{-115}$) — the alignment is not an artifact of the underdetermined Procrustes rotation. Rotations are concept-specific: same-concept transfer achieves 0.9807 while cross-concept transfer drops to 0.1904 (4–9× ratio per concept).
 
-This refines the Platonic Representation Hypothesis [Huh et al., 2024]: representational convergence is not monolithic but **stratified by processing depth**, with each stage of concept allocation converging independently across architectures. Full alignment results are reported in the companion validation paper [Henry, 2026b].
+The depth-stratification refinement — that depth-matched alignment (shallow $\leftrightarrow$ shallow, deep $\leftrightarrow$ deep) exceeds depth-mismatched — is not supported by the controlled test: depth-matched and depth-mismatched Procrustes alignment both achieve grand mean 0.982, indicating that the joint rotation subsumes whatever depth-level structure exists. The stronger result replaces the weaker one: concept directions converge cross-architecture at a level that makes depth-stratification a second-order question. Full alignment results are reported in the companion validation paper [Henry, 2026b].
 
 ---
 
@@ -237,7 +237,7 @@ The degradation of clean concept geometry in late layers is not noise but a stru
 
 When a concept has multiple allocation regions, the sub-representation at a given processing depth should align more strongly with the corresponding-depth sub-representation in other architectures than with a different-depth sub-representation. Specifically, after Procrustes rotation, cosine(shallow_A, shallow_B) > cosine(shallow_A, deep_B) and cosine(deep_A, deep_B) > cosine(deep_A, shallow_B).
 
-**Status**: **Confirmed.** Tested across 6 concepts and 56 model pairs. Depth-matched alignment significantly exceeds mismatched for all 6 concepts ($p < 0.01$ for each). Full results in the companion validation paper [Henry, 2026b].
+**Status**: **Partially supported.** General cross-architecture convergence confirmed: grand mean cosine 0.9807, permutation null z = 22–37, all $p < 10^{-115}$; rotation is concept-specific (same-concept 0.9807 vs. cross-concept 0.1904). The depth-stratification component specifically — that depth-matched alignment exceeds depth-mismatched — is not supported: both conditions yield 0.982. The prediction is correct that concept directions converge cross-architecture; it is not correct that depth-matching sharpens that convergence. Full results in the companion validation paper [Henry, 2026b].
 
 ### 4.6 Lexical vs. Compositional Sub-Representations
 
@@ -365,7 +365,7 @@ The key contributions are:
 | P2 | Architecture-stable CAZ ordering | Confirmed for relative ordering |
 | P3 | CAZ width correlates with abstraction | Initial support |
 | P4 | Post-CAZ degradation correlates with unembedding | Revised, partially supported |
-| P5 | Cross-architecture alignment is depth-matched | Strongly confirmed |
+| P5 | Cross-architecture alignment is depth-matched | Partially supported — general convergence confirmed (z=22–37), depth-stratification not supported |
 | P6 | Shallow peaks are lexical, deep are compositional | Not supported by initial test |
 | P7 | Multi-modality is architectural, not scale-dependent | Supported with nuance |
 
